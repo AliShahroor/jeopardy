@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeopardy! Game</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9733;</text></svg>">
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div id="particles"></div>
+
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-logo">
+        <span class="logo-icon">&#9733;</span>
+      </div>
+      <h1 class="title-main">Jeopardy!</h1>
+      <p class="title-sub">The Classic Quiz Show</p>
+
+      <div class="glass-card">
+        <div class="login-form">
+          <div class="input-group" style="max-width: 350px; margin: 0 auto;">
+            <label>Enter Your Name</label>
+            <input type="text" id="login-username" class="input-field"
+                   placeholder="Your username..." maxlength="20" autocomplete="off">
+          </div>
+          <button class="btn btn-primary btn-large" onclick="app.handleLogin()">
+            Play!
+          </button>
+        </div>
+      </div>
+
+      <div class="login-recent" id="login-recent-section" style="display: none;">
+        <h3>Quick Login</h3>
+        <div class="recent-users" id="recent-users"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN MENU ===== -->
+  <div id="menu-screen" class="screen">
+    <div class="menu-container">
+      <h1 class="title-main">Jeopardy!</h1>
+      <p class="menu-welcome">Welcome back, <span class="menu-username" id="menu-username"></span></p>
+
+      <div class="menu-buttons">
+        <button class="menu-btn" onclick="app.showSetupScreen()">
+          <span class="menu-icon">&#127918;</span>
+          <span class="menu-text">
+            New Game
+            <small>Start a new Jeopardy game</small>
+          </span>
+        </button>
+
+        <button class="menu-btn" onclick="app.showSavedGames()">
+          <span class="menu-icon">&#128190;</span>
+          <span class="menu-text">
+            Saved Games
+            <small>Continue a previously saved game</small>
+          </span>
+        </button>
+
+        <button class="menu-btn" onclick="app.showHowToPlay()">
+          <span class="menu-icon">&#128214;</span>
+          <span class="menu-text">
+            How to Play
+            <small>Learn the rules and features</small>
+          </span>
+        </button>
+      </div>
+
+      <div class="menu-footer">
+        <button class="btn btn-secondary btn-small" onclick="app.handleLogout()">
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME SETUP ===== -->
+  <div id="setup-screen" class="screen">
+    <div class="setup-container">
+      <h2 class="section-title">Game Setup</h2>
+
+      <div class="shared-banner" id="shared-banner" style="display:none;"></div>
+
+      <!-- Mode Selection -->
+      <div class="setup-section" id="setup-mode-section">
+        <h3>Game Mode</h3>
+        <div class="mode-selector">
+          <div class="mode-card selected" data-mode="topic" onclick="app.selectMode('topic')">
+            <div class="mode-icon">&#127758;</div>
+            <h3>Topic Mode</h3>
+            <p>Pick from 15 built-in categories with hundreds of questions</p>
+          </div>
+          <div class="mode-card" data-mode="custom" onclick="app.selectMode('custom')">
+            <div class="mode-icon">&#9997;</div>
+            <h3>Custom Mode</h3>
+            <p>Write your own questions and answers for a personalized game</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Name -->
+      <div class="setup-section" id="setup-name-section">
+        <h3>Game Name</h3>
+        <input type="text" id="setup-game-name" class="input-field"
+               placeholder="My Jeopardy Game" maxlength="30">
+      </div>
+
+      <!-- Players -->
+      <div class="setup-section">
+        <h3>Players (2-4)</h3>
+        <div class="player-inputs" id="player-inputs"></div>
+        <button class="btn btn-secondary btn-small add-player-btn" onclick="app.addPlayer()">
+          + Add Player
+        </button>
+      </div>
+
+      <!-- Timer -->
+      <div class="setup-section">
+        <h3>Timer per Question</h3>
+        <div class="timer-selector">
+          <button class="timer-option selected" data-time="30" onclick="app.selectTimer(30)">30s</button>
+          <button class="timer-option" data-time="45" onclick="app.selectTimer(45)">45s</button>
+          <button class="timer-option" data-time="60" onclick="app.selectTimer(60)">60s</button>
+          <button class="timer-option" data-time="90" onclick="app.selectTimer(90)">90s</button>
+          <button class="timer-option" data-time="120" onclick="app.selectTimer(120)">2 min</button>
+        </div>
+      </div>
+
+      <div class="setup-actions">
+        <button class="btn btn-secondary" onclick="app.goBack('menu')">Back</button>
+        <button class="btn btn-primary btn-large" onclick="app.proceedFromSetup()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOPIC SELECTION ===== -->
+  <div id="topic-screen" class="screen">
+    <div class="topic-container">
+      <h2 class="section-title">Choose Your Categories</h2>
+      <p class="topic-counter" id="topic-counter"><span>0</span> / 6 categories selected</p>
+
+      <div class="topic-grid" id="topic-grid"></div>
+
+      <div class="topic-actions">
+        <button class="btn btn-secondary" onclick="app.goBack('setup')">Back</button>
+        <button class="btn btn-secondary btn-large" onclick="app.surpriseMe()">&#127922; Surprise Me</button>
+        <button class="btn btn-primary btn-large" onclick="app.startTopicGame()">Start Game!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOM GAME BUILDER ===== -->
+  <div id="custom-screen" class="screen">
+    <div class="custom-container">
+      <h2 class="section-title">Custom Game Builder</h2>
+      <p style="text-align: center; color: rgba(255,255,255,0.4); margin-bottom: 20px;">
+        Create 6 categories with 5 questions each ($200 - $1000)
+      </p>
+
+      <div class="custom-tabs" id="custom-tabs"></div>
+      <div id="custom-panels"></div>
+
+      <div class="custom-actions">
+        <button class="btn btn-secondary" onclick="app.goBack('setup')">Back</button>
+        <button class="btn btn-primary btn-large" onclick="app.startCustomGame()">Start Game!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== GAME BOARD ===== -->
+  <div id="board-screen" class="screen">
+    <div class="board-header">
+      <span class="game-title">Jeopardy!</span>
+      <div class="board-header-actions">
+        <button class="btn btn-secondary btn-small" onclick="app.saveCurrentGame()">
+          &#128190; Save
+        </button>
+        <button class="btn btn-secondary btn-small" onclick="app.shareCurrentGame()">
+          &#128279; Share
+        </button>
+        <button class="sound-toggle" id="sound-toggle" onclick="app.toggleSound()">&#128264;</button>
+        <button class="btn btn-danger btn-small" onclick="app.endGameEarly()">
+          End Game
+        </button>
+      </div>
+    </div>
+
+    <div class="scoreboard" id="scoreboard"></div>
+
+    <div class="jeopardy-board" id="jeopardy-board"></div>
+  </div>
+
+  <!-- ===== QUESTION MODAL ===== -->
+  <div class="modal-overlay" id="question-overlay">
+    <div class="question-modal" id="question-modal">
+      <div class="modal-category" id="modal-category"></div>
+      <div class="modal-points" id="modal-points"></div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ===== SHARE MODAL ===== -->
+  <div class="modal-overlay" id="share-overlay">
+    <div class="share-modal glass-card">
+      <span class="share-icon">&#128279;</span>
+      <h3 class="share-title">Share this game</h3>
+      <p class="share-desc">Send this link to your friends. Anyone who opens it gets your exact game board &mdash; categories, questions, and timer &mdash; ready to play. No account needed.</p>
+      <div class="share-link-row">
+        <input type="text" id="share-link-input" class="input-field" readonly onclick="this.select()">
+        <button class="btn btn-primary" id="share-copy-btn" onclick="app.copyShareLink()">Copy</button>
+      </div>
+      <p class="share-hint" id="share-hint"></p>
+      <div class="share-actions">
+        <button class="btn btn-secondary" onclick="app.closeShare()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== RESULTS SCREEN ===== -->
+  <div id="results-screen" class="screen">
+    <div class="results-container">
+      <div class="winner-announcement">
+        <span class="winner-crown">&#127942;</span>
+        <h1 class="winner-name" id="winner-name"></h1>
+        <p class="winner-score" id="winner-final-score"></p>
+      </div>
+
+      <div class="results-scoreboard" id="results-scoreboard"></div>
+
+      <div class="results-actions">
+        <button class="btn btn-primary btn-large" onclick="app.showSetupScreen()">
+          New Game
+        </button>
+        <button class="btn btn-secondary" onclick="app.goBack('menu')">
+          Main Menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SAVED GAMES ===== -->
+  <div id="saved-screen" class="screen">
+    <div class="saved-container">
+      <h2 class="section-title">Saved Games</h2>
+
+      <div class="saved-games-list" id="saved-games-list"></div>
+
+      <div style="text-align: center;">
+        <button class="btn btn-secondary" onclick="app.goBack('menu')">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HOW TO PLAY ===== -->
+  <div id="howto-screen" class="screen">
+    <div class="howto-container">
+      <h2 class="section-title">How to Play</h2>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#127918;</span> Game Modes</h3>
+        <ul>
+          <li><strong>Topic Mode:</strong> Choose 6 categories from 25+ built-in genres &mdash; from Science and History to Video Games, Anime, Football, and Flags of the World. The game builds a fresh, randomized board each time. Can't decide? Hit <strong>&#127922; Surprise Me</strong> to auto-pick 6 random categories.</li>
+          <li><strong>Custom Mode:</strong> Write your own questions, answers, and use the built-in point values. Perfect for study sessions, parties, or themed games.</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#127916;</span> The Game Board</h3>
+        <ul>
+          <li>The board has 6 categories across the top and 5 rows of increasing point values ($200 to $1000).</li>
+          <li>The current player selects a cell to reveal a question.</li>
+          <li>A timer counts down - answer before time runs out!</li>
+          <li>After the answer is revealed, judge whether the response was correct or wrong.</li>
+          <li>Correct answers add points; wrong answers deduct points.</li>
+          <li>Play continues until all questions are answered.</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#9889;</span> Question Types</h3>
+        <ul>
+          <li><strong>Text Questions:</strong> Standard trivia - read the question, discuss the answer, then reveal and judge.</li>
+          <li><strong>Image Questions:</strong> Visual questions using emoji representations and descriptions.</li>
+          <li><strong>Interactive Challenges:</strong> Rapid-fire rounds where a player must type as many answers as possible before the timer runs out (e.g., "Name 30 European countries in 60 seconds").</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#128101;</span> Multiplayer</h3>
+        <ul>
+          <li>2 to 4 players can compete.</li>
+          <li>Players take turns selecting questions from the board.</li>
+          <li>Any player can be selected to answer (use the player buttons in the question modal).</li>
+          <li>The player with the highest score at the end wins!</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#128190;</span> Save & Load</h3>
+        <ul>
+          <li>Click "Save" during a game to save your progress.</li>
+          <li>Access saved games from the main menu.</li>
+          <li>Games are saved per user using your browser's local storage.</li>
+          <li>You can save multiple games and continue them later.</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#128279;</span> Share With Friends</h3>
+        <ul>
+          <li>Click <strong>&#128279; Share</strong> during any game to get a link.</li>
+          <li>Anyone who opens the link gets your exact board &mdash; categories, questions, and timer &mdash; ready to play.</li>
+          <li>No account or sign-up needed for them to play your game.</li>
+          <li>Great for sharing a custom quiz you built for friends, a class, or a party.</li>
+        </ul>
+      </div>
+
+      <div class="howto-actions">
+        <button class="btn btn-secondary" onclick="app.goBack('menu')">Back to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="questions.js"></script>
+  <script src="game.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
