@@ -2148,3 +2148,6 @@ textarea.input-field {
 .team-preview { margin-top: 16px; }
 .team-preview-card { font-size: 1rem; }
 .team-preview-card strong { font-size: 1.1rem; }
+
+/* Answer stays hidden until the question resolves (so steals are fair) */
+.hidden-answer { display: none !important; }

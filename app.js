@@ -1013,18 +1013,16 @@
         `).join('')}
       </div>
       <div class="answer-section" id="answer-section">
-        <div class="answer-buttons">
-          <button class="btn btn-primary" onclick="window.app.revealAnswer()">
-            Reveal Answer
-          </button>
-          <button class="btn btn-secondary" onclick="window.app.skipQuestion()">
-            Skip Question
-          </button>
+        <div class="correct-answer hidden-answer" id="answer-box">
+          <span class="answer-label">Answer</span>
+          <span id="answer-text"></span>
         </div>
+        <div id="judge-controls"></div>
       </div>
     `;
 
     startQuestionTimer();
+    initJudging();
   }
 
   function renderImageQuestion(question) {
@@ -1071,18 +1069,16 @@
         `).join('')}
       </div>
       <div class="answer-section" id="answer-section">
-        <div class="answer-buttons">
-          <button class="btn btn-primary" onclick="window.app.revealAnswer()">
-            Reveal Answer
-          </button>
-          <button class="btn btn-secondary" onclick="window.app.skipQuestion()">
-            Skip Question
-          </button>
+        <div class="correct-answer hidden-answer" id="answer-box">
+          <span class="answer-label">Answer</span>
+          <span id="answer-text"></span>
         </div>
+        <div id="judge-controls"></div>
       </div>
     `;
 
     startQuestionTimer();
+    initJudging();
   }
 
   function renderInteractiveQuestion(question) {
@@ -1138,6 +1134,11 @@
       btn.classList.toggle('selected', pIdx === index);
       btn.style.borderColor = pIdx === index ? game.players[pIdx].color : '';
     });
+    // Before anyone has attempted, the judged player follows this selection.
+    if (attemptedPlayers.size === 0) {
+      judgingPlayer = index;
+      renderJudgeControls(false);
+    }
   }
 
   function startQuestionTimer() {
@@ -1169,41 +1170,49 @@
         }
       },
       () => {
-        // Time's up
+        // Time's up — do NOT reveal the answer; open it up for a steal.
         sound.playTimerEnd();
         timerDisplay.textContent = '0';
         timerBar.style.width = '0%';
-        revealAnswer(true);
+        handleTimeUp();
       }
     );
   }
 
-  // ---- Reveal & Judging (with steal) ----
-  // Players who have already (incorrectly) attempted the current question.
-  let attemptedPlayers = new Set();
-  // The player currently being judged (the original answerer, or a stealer).
-  let judgingPlayer = null;
+  // ---- Judging & Steal (the answer stays HIDDEN until the question resolves,
+  // so a stealing team can't just read it off the screen) ----
+  let attemptedPlayers = new Set();   // players who already (wrongly) tried this question
+  let judgingPlayer = null;           // who is being judged right now (answerer or stealer)
+  let answerShown = false;
 
-  function revealAnswer(timedOut = false) {
+  function initJudging() {
+    attemptedPlayers = new Set();
+    answerShown = false;
+    judgingPlayer = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
+    renderJudgeControls(false);
+  }
+
+  function showAnswer() {
+    answerShown = true;
+    const box = document.getElementById('answer-box');
+    const txt = document.getElementById('answer-text');
+    if (txt && game.currentQuestion) txt.textContent = game.currentQuestion.a;
+    if (box) box.classList.remove('hidden-answer');
+  }
+
+  // Timer ran out: don't reveal the answer; hand the question to the other teams.
+  function handleTimeUp() {
     game.stopTimer();
     const question = game.currentQuestion;
     if (!question) return;
-
-    attemptedPlayers = new Set();
-    judgingPlayer = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
-
-    const answerSection = document.getElementById('answer-section');
-    answerSection.innerHTML = `
-      <div class="reveal-section">
-        <div class="correct-answer">
-          <span class="answer-label">Correct Answer</span>
-          ${escapeHtml(question.a)}
-        </div>
-        ${timedOut ? '<p class="times-up-note">Time\'s up!</p>' : ''}
-        <div id="judge-controls"></div>
-      </div>
-    `;
-    renderJudgeControls(false);
+    if (judgingPlayer !== null) attemptedPlayers.add(judgingPlayer);
+    const remaining = game.players.map((_, i) => i).filter(i => !attemptedPlayers.has(i));
+    if (remaining.length > 0) {
+      enterStealMode(remaining, true);
+    } else {
+      showAnswer();
+      setTimeout(finishQuestion, 1500);
+    }
   }
 
   function renderJudgeControls(isSteal) {
@@ -1214,14 +1223,15 @@
 
     controls.innerHTML = `
       <p class="judge-target">
-        ${isSteal ? '&#128176; Steal attempt &mdash; ' : 'Judging for: '}
+        ${isSteal ? '&#128176; Steal attempt &mdash; ' : 'Answering: '}
         <strong style="color: ${p.color}">${escapeHtml(p.name)}</strong>
       </p>
       <div class="judge-buttons">
         <button class="btn btn-success" onclick="window.app.judgeAnswer(true)">&#10003; Correct (+$${question.points})</button>
         <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Wrong (no points)</button>
+        <button class="btn btn-secondary" onclick="window.app.showAnswer()">&#128065; Show Answer</button>
         ${attemptedPlayers.size === 0
-          ? '<button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip (no points)</button>'
+          ? '<button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip</button>'
           : ''}
       </div>
     `;
@@ -1230,18 +1240,20 @@
   function judgeAnswer(isCorrect) {
     const question = game.currentQuestion;
     if (!question || judgingPlayer === null) return;
+    game.stopTimer();
     const modal = document.getElementById('question-modal');
 
     if (isCorrect) {
       game.adjustScore(judgingPlayer, question.points);
+      showAnswer();
+      renderScoreboard();
       sound.playCorrect();
       modal.classList.remove('flash-wrong');
       modal.classList.add('flash-correct');
       const rect = modal.getBoundingClientRect();
       particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
       particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
-      renderScoreboard();
-      setTimeout(finishQuestion, 900);
+      setTimeout(finishQuestion, 1100);
       return;
     }
 
@@ -1254,18 +1266,21 @@
 
     const remaining = game.players.map((_, i) => i).filter(i => !attemptedPlayers.has(i));
     if (remaining.length > 0) {
-      enterStealMode(remaining);
+      enterStealMode(remaining, false);
     } else {
-      setTimeout(finishQuestion, 500);
+      // Everyone has missed it — now it's fair to reveal the answer.
+      showAnswer();
+      setTimeout(finishQuestion, 1200);
     }
   }
 
-  function enterStealMode(remaining) {
+  function enterStealMode(remaining, timedOut) {
     const controls = document.getElementById('judge-controls');
     if (!controls) return;
     sound.playReveal();
     controls.innerHTML = `
-      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points. No penalty for a wrong guess.</p>
+      ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up!</p>' : ''}
+      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points. No penalty for a wrong guess. (Answer stays hidden so it's fair.)</p>
       <div class="steal-players">
         ${remaining.map(i => `
           <button class="player-select-btn steal-btn" style="border-color: ${game.players[i].color}"
@@ -1275,7 +1290,7 @@
         `).join('')}
       </div>
       <div class="judge-buttons" style="margin-top: 14px;">
-        <button class="btn btn-secondary" onclick="window.app.stealPass()">No steal &mdash; move on</button>
+        <button class="btn btn-secondary" onclick="window.app.stealPass()">No steal &mdash; reveal &amp; move on</button>
       </div>
     `;
   }
@@ -1288,7 +1303,8 @@
 
   function stealPass() {
     sound.playClick();
-    finishQuestion();
+    showAnswer();
+    setTimeout(finishQuestion, 1000);
   }
 
   function skipQuestion() {
@@ -1303,9 +1319,10 @@
     if (game.isGameOver) setTimeout(() => showResults(), 500);
   }
 
-  // Skip from the reveal screen / end the question with no further scoring.
+  // Skip / give up on the question with no scoring — reveal the answer, then move on.
   function skipFromReveal() {
-    finishQuestion();
+    showAnswer();
+    setTimeout(finishQuestion, 1000);
   }
 
   // Close out the current question (cell resolved once), advance the turn.
@@ -2261,7 +2278,7 @@
     startCustomGame,
     selectCell,
     selectAnsweringPlayer,
-    revealAnswer,
+    showAnswer,
     judgeAnswer,
     selectStealer,
     stealPass,
