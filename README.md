@@ -6,12 +6,12 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 ## Features
 
 - **Login** with a name (saved locally, with quick-login for returning players).
-- **Topic Mode** — pick 6 from **500+ categories**: hundreds of *authentic
-  Jeopardy categories* from the real J!Archive dataset
-  ([openaccess-ai-collective/jeopardy](https://huggingface.co/datasets/openaccess-ai-collective/jeopardy)),
-  plus bonus genres (Video Games, Anime & Manga, Football, Superheroes,
-  Flags of the World, and more). Use the **search box** to find any category. A
-  fresh, randomized board is built every game.
+- **Topic Mode** — pick 6 from **24 broad, exciting themes** (General Knowledge,
+  Sports, History, Geography, Movies & TV, Music, Science, Famous People,
+  Video Games, Anime, Football, Flags, and more). Questions are clean, direct
+  **question-and-answer** trivia (well-known facts, no cryptic wordplay), and a
+  fresh randomized board is built every game. Geography even mixes in flag
+  questions. Use the **search box** to find a theme.
   - **🎲 Surprise Me** auto-picks 6 random categories.
 - **Custom Mode** — write your own categories, questions, and answers.
 - **Question types:**
@@ -27,9 +27,10 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 - **2–4 players/teams**, scoreboard (teams show their members), turn tracking.
 - **💰 Steal** — when a player answers wrong, any other player can steal:
   answer correctly to take the points, or get it wrong and lose them.
-- **⚡ Bonus Rounds (lifeline)** — twice per game, trigger a head-to-head duel:
-  two contestants each get 30–60s to answer as many rapid-fire questions as
-  they can; the winner takes **+$250**. Optional every time.
+- **⚡ Bonus Rounds (lifeline)** — twice per game, optional, two modes:
+  *Rapid-Fire Trivia* (each contestant answers as many questions as they can in
+  30–60s) or *Name as Many* (pick a topic, bid how many you can name, then name
+  them before the clock runs out). Winner takes **+$250**.
 - **💾 Save / Load** — remembers the entire game: board, every score, whose
   turn it is, answered cells, timer, and bonus rounds left.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact

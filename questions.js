@@ -744,11 +744,11 @@ if (typeof REAL_CATEGORIES !== 'undefined') {
 // Curate the playable board to 25 broad, exciting categories. Anything not in
 // this list (older narrow placeholders) is removed from the active set.
 const ACTIVE_CATEGORIES = [
-  // Real Jeopardy themes (hundreds of well-known clues, fully randomized)
+  // Curated, direct-question themes (clean, well-known, randomized)
   'General Knowledge', 'Sports', 'History', 'Geography', 'Movies & TV', 'Music & Songs',
-  'Science', 'Animals & Nature', 'Food & Drink', 'Literature', 'Art & Culture', 'Word Play',
-  'Pop Culture', 'Technology', 'Space & Astronomy', 'Business & Brands',
-  // Bonus curated genres (modern topics the classic dataset lacks)
+  'Science', 'Animals & Nature', 'Food & Drink', 'Famous People', 'Technology & Inventions',
+  'Space & Astronomy', 'Art & Literature', 'Pop Culture', 'Famous Landmarks',
+  // Bonus curated genres
   'Video Games', 'Anime & Manga', 'Superheroes', 'Football (Soccer)',
   'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World'
 ];
