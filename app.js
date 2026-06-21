@@ -500,7 +500,7 @@
       game.initCustomGame(setupState.presetBoard, setupState.players, setupState.timer, setupState.gameName);
       pendingSharedGame = null;
       document.getElementById('setup-screen').classList.remove('preset-mode');
-      showGameBoard();
+      startBoardWithReveal();
       return;
     }
 
@@ -640,7 +640,7 @@
       setupState.customCategories
     );
 
-    showGameBoard();
+    startBoardWithReveal();
   }
 
   // ---- Add Your Own Category (mixed in with built-in categories) ----
@@ -836,6 +836,48 @@
       setupState.gameName
     );
 
+    startBoardWithReveal();
+  }
+
+  // After starting a new game, reveal team line-ups first (so everyone sees
+  // who's with who), then show the board. Solo games skip straight to the board.
+  function startBoardWithReveal() {
+    const isTeams = game.players.some(p => p.isTeam && p.members && p.members.length);
+    if (isTeams) {
+      showTeamReveal();
+    } else {
+      showGameBoard();
+    }
+  }
+
+  function showTeamReveal() {
+    const modal = document.getElementById('team-reveal-modal');
+    modal.innerHTML = `
+      <span class="bonus-icon">&#127942;</span>
+      <h2 class="bonus-title">The Teams!</h2>
+      <p class="bonus-desc">Here's who's on each team &mdash; ${game.players.length} teams in total.</p>
+      <div class="reveal-teams">
+        ${game.players.map(p => `
+          <div class="reveal-team-card" style="border-color:${p.color}">
+            <div class="reveal-team-name" style="color:${p.color}">${escapeHtml(p.name)}</div>
+            <div class="reveal-team-members">${p.members && p.members.length ? p.members.map(escapeHtml).join(' &middot; ') : '&mdash;'}</div>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-primary btn-large" onclick="window.app.beginAfterReveal()">Let's Play!</button>
+    `;
+    document.getElementById('team-reveal-overlay').classList.add('active');
+    sound.playBoardReveal();
+    // A little confetti for the reveal
+    setTimeout(() => {
+      const rect = modal.getBoundingClientRect();
+      particles.createConfetti(rect.left + rect.width / 2, rect.top + 40, 40);
+    }, 200);
+  }
+
+  function beginAfterReveal() {
+    document.getElementById('team-reveal-overlay').classList.remove('active');
+    sound.playClick();
     showGameBoard();
   }
 
@@ -2195,6 +2237,7 @@
     shareCurrentGame,
     copyShareLink,
     closeShare,
+    beginAfterReveal,
     openBonus,
     setBonusMode,
     setBonusPlayer,

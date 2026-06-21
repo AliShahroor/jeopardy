@@ -2128,3 +2128,23 @@ textarea.input-field {
 
 .custom-cat-row .cc-dollar { color: var(--gold); font-weight: 700; flex-shrink: 0; }
 .custom-cat-row .cc-pts { flex: 0 0 70px; min-width: 60px; text-align: center; color: var(--gold-light); }
+
+/* ===================== Team reveal ===================== */
+#team-reveal-overlay .team-reveal-modal {
+  max-width: 620px; width: 94%; margin: 0 auto; text-align: center;
+  padding: 34px 30px; max-height: 90vh; overflow-y: auto;
+  transform: scale(0.94); transition: transform var(--transition-speed) ease;
+}
+#team-reveal-overlay.active .team-reveal-modal { transform: scale(1); }
+.reveal-teams { display: flex; flex-direction: column; gap: 12px; margin: 22px 0; }
+.reveal-team-card {
+  padding: 14px 18px; border-radius: 12px; background: rgba(0,0,0,0.28);
+  border: 2px solid var(--glass-border); text-align: left;
+}
+.reveal-team-name { font-family: var(--font-display); font-size: 1.4rem; letter-spacing: 1px; margin-bottom: 4px; }
+.reveal-team-members { color: var(--text-light); font-size: 1.05rem; }
+
+/* Make the shuffle preview clearer */
+.team-preview { margin-top: 16px; }
+.team-preview-card { font-size: 1rem; }
+.team-preview-card strong { font-size: 1.1rem; }
