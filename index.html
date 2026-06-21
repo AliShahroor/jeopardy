@@ -190,8 +190,12 @@
       <div class="topic-selected" id="topic-selected"></div>
 
       <input type="text" id="topic-search" class="input-field topic-search"
-             placeholder="🔎 Search 500+ categories (real Jeopardy + bonus genres)…"
+             placeholder="🔎 Search categories…"
              autocomplete="off" oninput="app.filterTopics(this.value)">
+
+      <button class="btn btn-secondary add-own-btn" onclick="app.openCustomCategory()">
+        &#10133; Add your own category
+      </button>
 
       <div class="topic-grid" id="topic-grid"></div>
       <p class="topic-more-note" id="topic-more-note"></p>
@@ -254,6 +258,20 @@
       <div class="modal-category" id="modal-category"></div>
       <div class="modal-points" id="modal-points"></div>
       <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ===== ADD-YOUR-OWN CATEGORY MODAL ===== -->
+  <div class="modal-overlay" id="custom-cat-overlay">
+    <div class="custom-cat-modal glass-card">
+      <h3 class="share-title">&#10133; Your Own Category</h3>
+      <p class="share-desc">Write a category and a question for each value. Mix it right in with the built-in ones. (Blanks are skipped.)</p>
+      <input type="text" id="custom-cat-name" class="input-field" placeholder="Category name (e.g. Our Friend Group)" maxlength="28">
+      <div id="custom-cat-rows"></div>
+      <div class="share-actions" style="gap:10px;">
+        <button class="btn btn-secondary" onclick="app.closeCustomCategory()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveCustomCategory()">Add Category</button>
+      </div>
     </div>
   </div>
 

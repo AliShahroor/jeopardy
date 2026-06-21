@@ -37,14 +37,33 @@ class JeopardyGame {
     });
   }
 
-  // Initialize a new game with topic mode
-  initTopicGame(categories, players, timerDuration, gameName) {
+  // Build a 5-tier board array for a user-written custom category.
+  buildCustomTierBoard(questions) {
+    return this.pointValues.map(pts => {
+      const found = (questions || []).find(q => q.points === pts && q.q && q.q.trim());
+      return found ? { ...found } : { q: '(no question set)', a: '(none)', points: pts, type: 'text' };
+    });
+  }
+
+  // Initialize a new game with topic mode. `customBoards` maps a category name
+  // to a user-written question list, letting players MIX their own categories
+  // in with the built-in ones.
+  initTopicGame(categories, players, timerDuration, gameName, customBoards) {
+    customBoards = customBoards || {};
     this.gameMode = 'topic';
     this.categories = categories;
     this.players = this.buildPlayers(players);
     this.timerDuration = timerDuration;
     this.gameName = gameName || 'Untitled Game';
-    this.board = buildGameBoard(categories);
+    this.board = {};
+    categories.forEach(cat => {
+      if (customBoards[cat]) {
+        this.board[cat] = this.buildCustomTierBoard(customBoards[cat]);
+      } else {
+        const built = buildGameBoard([cat]);
+        this.board[cat] = built[cat] || [];
+      }
+    });
     this.totalCells = categories.length * this.pointValues.length;
     this.answeredCells = new Set();
     this.answeredCount = 0;

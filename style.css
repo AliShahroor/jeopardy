@@ -2110,3 +2110,18 @@ textarea.input-field {
   font-family: var(--font-display); font-size: 2.6rem; color: var(--gold);
   text-align: center; margin: 14px 0;
 }
+
+/* ===================== Add-your-own category ===================== */
+.add-own-btn { display: block; margin: 0 auto 18px; }
+.topic-chip--custom { background: rgba(168,85,247,0.18); border-color: rgba(168,85,247,0.6); color: #E9D5FF; }
+#custom-cat-overlay .custom-cat-modal {
+  max-width: 640px; width: 94%; margin: 0 auto; padding: 30px 28px;
+  max-height: 90vh; overflow-y: auto;
+  transform: scale(0.95); transition: transform var(--transition-speed) ease;
+}
+#custom-cat-overlay.active .custom-cat-modal { transform: scale(1); }
+#custom-cat-name { margin-bottom: 16px; }
+.custom-cat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.custom-cat-row .points-badge { flex-shrink: 0; min-width: 56px; text-align: center; }
+.custom-cat-row .cc-q { flex: 2; min-width: 180px; }
+.custom-cat-row .cc-a { flex: 1; min-width: 120px; }

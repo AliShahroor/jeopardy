@@ -21,6 +21,7 @@
     gameName: '',
     selectedTopics: [],
     customBoard: {},
+    customCategories: {},     // name -> [questions] for "add your own" mixed categories
     presetBoard: null
   };
 
@@ -193,6 +194,7 @@
       gameName: '',
       selectedTopics: [],
       customBoard: {},
+      customCategories: {},
       presetBoard: null
     };
 
@@ -218,6 +220,7 @@
       gameName: pendingSharedGame.name || 'Shared Game',
       selectedTopics: [],
       customBoard: {},
+      customCategories: {},
       presetBoard: pendingSharedGame.board
     };
 
@@ -517,6 +520,7 @@
   function showTopicScreen() {
     showScreen('topic-screen');
     setupState.selectedTopics = [];
+    setupState.customCategories = {};
     topicSearch = '';
     const search = document.getElementById('topic-search');
     if (search) search.value = '';
@@ -576,11 +580,14 @@
       container.innerHTML = '';
       return;
     }
-    container.innerHTML = setupState.selectedTopics.map(cat => `
-      <button class="topic-chip" onclick="window.app.toggleTopic('${escapeJs(cat)}')" title="Remove">
-        ${CATEGORY_ICONS[cat] || '&#128196;'} ${escapeHtml(cat)} <span class="chip-x">&times;</span>
-      </button>
-    `).join('');
+    container.innerHTML = setupState.selectedTopics.map(cat => {
+      const isCustom = !!(setupState.customCategories && setupState.customCategories[cat]);
+      const icon = isCustom ? '&#128221;' : (CATEGORY_ICONS[cat] || '&#128196;');
+      return `
+      <button class="topic-chip ${isCustom ? 'topic-chip--custom' : ''}" onclick="window.app.toggleTopic('${escapeJs(cat)}')" title="Remove">
+        ${icon} ${escapeHtml(cat)} <span class="chip-x">&times;</span>
+      </button>`;
+    }).join('');
   }
 
   function toggleTopic(category) {
@@ -588,6 +595,10 @@
 
     if (index > -1) {
       setupState.selectedTopics.splice(index, 1);
+      // Removing a custom ("add your own") category discards its definition.
+      if (setupState.customCategories && setupState.customCategories[category]) {
+        delete setupState.customCategories[category];
+      }
       sound.playClick();
     } else if (setupState.selectedTopics.length < 6) {
       setupState.selectedTopics.push(category);
@@ -625,10 +636,56 @@
       setupState.selectedTopics,
       setupState.players,
       setupState.timer,
-      setupState.gameName
+      setupState.gameName,
+      setupState.customCategories
     );
 
     showGameBoard();
+  }
+
+  // ---- Add Your Own Category (mixed in with built-in categories) ----
+  function openCustomCategory() {
+    const rows = [200, 400, 600, 800, 1000].map(pts => `
+      <div class="custom-cat-row">
+        <span class="points-badge">$${pts}</span>
+        <input type="text" class="input-field cc-q" data-pts="${pts}" placeholder="Question for $${pts}…" maxlength="160">
+        <input type="text" class="input-field cc-a" data-pts="${pts}" placeholder="Answer" maxlength="60">
+      </div>`).join('');
+    document.getElementById('custom-cat-rows').innerHTML = rows;
+    document.getElementById('custom-cat-name').value = '';
+    document.getElementById('custom-cat-overlay').classList.add('active');
+    sound.playClick();
+  }
+
+  function closeCustomCategory() {
+    document.getElementById('custom-cat-overlay').classList.remove('active');
+  }
+
+  function saveCustomCategory() {
+    const name = document.getElementById('custom-cat-name').value.trim();
+    if (!name) { showToast('Give your category a name', 'error'); return; }
+    if (QUESTION_BANK[name] || setupState.customCategories[name]) {
+      showToast('That name is already taken', 'error'); return;
+    }
+    if (setupState.selectedTopics.length >= 6) {
+      showToast('You already have 6 categories — remove one first', 'error'); return;
+    }
+    const questions = [];
+    document.querySelectorAll('#custom-cat-rows .custom-cat-row').forEach(row => {
+      const pts = parseInt(row.querySelector('.cc-q').dataset.pts);
+      const q = row.querySelector('.cc-q').value.trim();
+      const a = row.querySelector('.cc-a').value.trim();
+      if (q && a) questions.push({ q, a, points: pts, type: 'text' });
+    });
+    if (questions.length === 0) {
+      showToast('Add at least one question with an answer', 'error'); return;
+    }
+    setupState.customCategories[name] = questions;
+    setupState.selectedTopics.push(name);
+    sound.playReveal();
+    closeCustomCategory();
+    renderTopicGrid();
+    showToast('Your category was added!', 'success');
   }
 
   // ---- Custom Game Builder ----
@@ -2120,6 +2177,9 @@
     toggleTopic,
     filterTopics,
     surpriseMe,
+    openCustomCategory,
+    closeCustomCategory,
+    saveCustomCategory,
     startTopicGame,
     shareCurrentGame,
     copyShareLink,
