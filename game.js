@@ -37,12 +37,21 @@ class JeopardyGame {
     });
   }
 
-  // Build a 5-tier board array for a user-written custom category.
+  // Build a 5-row board array for a user-written custom category. The rows are
+  // used in the order given, keeping each question's own point value (so a
+  // custom category can use any point amounts, even repeated ones).
   buildCustomTierBoard(questions) {
-    return this.pointValues.map(pts => {
-      const found = (questions || []).find(q => q.points === pts && q.q && q.q.trim());
-      return found ? { ...found } : { q: '(no question set)', a: '(none)', points: pts, type: 'text' };
-    });
+    const rows = (questions || []).slice(0, 5).map((q, i) => ({
+      q: q.q || '(no question set)',
+      a: q.a || '(none)',
+      points: (q.points != null ? q.points : this.pointValues[i]),
+      type: q.type || 'text'
+    }));
+    while (rows.length < 5) {
+      const i = rows.length;
+      rows.push({ q: '(no question set)', a: '(none)', points: this.pointValues[i], type: 'text' });
+    }
+    return rows;
   }
 
   // Initialize a new game with topic mode. `customBoards` maps a category name

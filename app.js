@@ -647,9 +647,10 @@
   function openCustomCategory() {
     const rows = [200, 400, 600, 800, 1000].map(pts => `
       <div class="custom-cat-row">
-        <span class="points-badge">$${pts}</span>
-        <input type="text" class="input-field cc-q" data-pts="${pts}" placeholder="Question for $${pts}…" maxlength="160">
-        <input type="text" class="input-field cc-a" data-pts="${pts}" placeholder="Answer" maxlength="60">
+        <span class="cc-dollar">$</span>
+        <input type="number" class="input-field cc-pts" value="${pts}" min="0" step="50" placeholder="pts">
+        <input type="text" class="input-field cc-q" placeholder="Question…" maxlength="160">
+        <input type="text" class="input-field cc-a" placeholder="Answer" maxlength="60">
       </div>`).join('');
     document.getElementById('custom-cat-rows').innerHTML = rows;
     document.getElementById('custom-cat-name').value = '';
@@ -670,17 +671,25 @@
     if (setupState.selectedTopics.length >= 6) {
       showToast('You already have 6 categories — remove one first', 'error'); return;
     }
-    const questions = [];
-    document.querySelectorAll('#custom-cat-rows .custom-cat-row').forEach(row => {
-      const pts = parseInt(row.querySelector('.cc-q').dataset.pts);
+    const defaults = [200, 400, 600, 800, 1000];
+    const rows = [];
+    let realCount = 0;
+    document.querySelectorAll('#custom-cat-rows .custom-cat-row').forEach((row, i) => {
+      let pts = parseInt(row.querySelector('.cc-pts').value, 10);
+      if (isNaN(pts) || pts < 0) pts = defaults[i] || 200;
       const q = row.querySelector('.cc-q').value.trim();
       const a = row.querySelector('.cc-a').value.trim();
-      if (q && a) questions.push({ q, a, points: pts, type: 'text' });
+      if (q && a) {
+        rows.push({ q, a, points: pts, type: 'text' });
+        realCount++;
+      } else {
+        rows.push({ q: '(no question set)', a: '(none)', points: pts, type: 'text' });
+      }
     });
-    if (questions.length === 0) {
+    if (realCount === 0) {
       showToast('Add at least one question with an answer', 'error'); return;
     }
-    setupState.customCategories[name] = questions;
+    setupState.customCategories[name] = rows;
     setupState.selectedTopics.push(name);
     sound.playReveal();
     closeCustomCategory();
@@ -856,7 +865,9 @@
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < numCats; col++) {
         const isAnswered = game.isCellAnswered(col, row);
-        const pointValue = game.pointValues[row];
+        // Show this cell's actual point value (custom categories can set their own).
+        const cellQ = game.board[game.categories[col]] && game.board[game.categories[col]][row];
+        const pointValue = (cellQ && cellQ.points != null) ? cellQ.points : game.pointValues[row];
 
         html += `
           <div class="board-cell ${isAnswered ? 'answered' : ''}"

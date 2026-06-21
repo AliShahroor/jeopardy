@@ -2125,3 +2125,6 @@ textarea.input-field {
 .custom-cat-row .points-badge { flex-shrink: 0; min-width: 56px; text-align: center; }
 .custom-cat-row .cc-q { flex: 2; min-width: 180px; }
 .custom-cat-row .cc-a { flex: 1; min-width: 120px; }
+
+.custom-cat-row .cc-dollar { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+.custom-cat-row .cc-pts { flex: 0 0 70px; min-width: 60px; text-align: center; color: var(--gold-light); }
