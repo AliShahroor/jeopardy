@@ -6,9 +6,12 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 ## Features
 
 - **Login** with a name (saved locally, with quick-login for returning players).
-- **Topic Mode** — pick 6 from **26 genres** (Science, History, Geography,
-  Video Games, Anime & Manga, Football, Superheroes, Mythology, Chemistry,
-  Flags of the World, and more). A fresh, randomized board is built every game.
+- **Topic Mode** — pick 6 from **500+ categories**: hundreds of *authentic
+  Jeopardy categories* from the real J!Archive dataset
+  ([openaccess-ai-collective/jeopardy](https://huggingface.co/datasets/openaccess-ai-collective/jeopardy)),
+  plus bonus genres (Video Games, Anime & Manga, Football, Superheroes,
+  Flags of the World, and more). Use the **search box** to find any category. A
+  fresh, randomized board is built every game.
   - **🎲 Surprise Me** auto-picks 6 random categories.
 - **Custom Mode** — write your own categories, questions, and answers.
 - **Question types:**
@@ -19,6 +22,8 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
     countries in 60 seconds"*.
 - **Adjustable timer** per question (30s → 2 min), changeable per game.
 - **2–4 players**, scoreboard, turn tracking, correct/wrong judging.
+- **💰 Steal** — when a player answers wrong, any other player can steal:
+  answer correctly to take the points, or get it wrong and lose them.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact
   board (categories, questions, timer). No account needed. Great for sharing a
   custom quiz with friends.

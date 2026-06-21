@@ -167,6 +167,25 @@ class JeopardyGame {
     return true;
   }
 
+  // Adjust a player's score by a delta (used for steals, where one question
+  // can change several players' scores before the cell is closed).
+  adjustScore(playerIndex, delta) {
+    if (this.players[playerIndex]) {
+      this.players[playerIndex].score += delta;
+    }
+  }
+
+  // Mark a cell as resolved exactly once (after all answer/steal attempts).
+  markAnswered(cellKey) {
+    if (this.answeredCells.has(cellKey)) return false;
+    this.answeredCells.add(cellKey);
+    this.answeredCount++;
+    if (this.answeredCount >= this.totalCells) {
+      this.isGameOver = true;
+    }
+    return true;
+  }
+
   isCellAnswered(categoryIndex, pointIndex) {
     return this.answeredCells.has(`${categoryIndex}-${pointIndex}`);
   }

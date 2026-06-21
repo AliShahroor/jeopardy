@@ -320,24 +320,40 @@
   }
 
   // ---- Topic Selection ----
+  const TOPIC_RENDER_CAP = 90; // cap rendered cards for performance with 500+ categories
+  let topicSearch = '';
+
   function showTopicScreen() {
     showScreen('topic-screen');
     setupState.selectedTopics = [];
+    topicSearch = '';
+    const search = document.getElementById('topic-search');
+    if (search) search.value = '';
+    renderTopicGrid();
+  }
+
+  function filterTopics(term) {
+    topicSearch = (term || '').trim().toLowerCase();
     renderTopicGrid();
   }
 
   function renderTopicGrid() {
-    const categories = getAvailableCategories();
+    const all = getAvailableCategories();
     const grid = document.getElementById('topic-grid');
 
-    grid.innerHTML = categories.map(cat => {
+    const filtered = topicSearch
+      ? all.filter(cat => cat.toLowerCase().includes(topicSearch))
+      : all;
+    const shown = filtered.slice(0, TOPIC_RENDER_CAP);
+
+    grid.innerHTML = shown.map(cat => {
       const isSelected = setupState.selectedTopics.includes(cat);
       const isDisabled = !isSelected && setupState.selectedTopics.length >= 6;
       const questionCount = QUESTION_BANK[cat] ? QUESTION_BANK[cat].length : 0;
 
       return `
         <div class="topic-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}"
-             onclick="window.app.toggleTopic('${escapeHtml(cat)}')">
+             onclick="window.app.toggleTopic('${escapeJs(cat)}')">
           <span class="topic-icon">${CATEGORY_ICONS[cat] || '&#128196;'}</span>
           <div class="topic-name">${escapeHtml(cat)}</div>
           <div class="topic-count">${questionCount} questions</div>
@@ -345,8 +361,35 @@
       `;
     }).join('');
 
+    const note = document.getElementById('topic-more-note');
+    if (note) {
+      if (filtered.length > shown.length) {
+        note.textContent = `Showing ${shown.length} of ${filtered.length} matches — type to narrow it down.`;
+      } else if (filtered.length === 0) {
+        note.textContent = 'No categories match your search.';
+      } else {
+        note.textContent = '';
+      }
+    }
+
     document.getElementById('topic-counter').innerHTML =
       `<span>${setupState.selectedTopics.length}</span> / 6 categories selected`;
+
+    renderSelectedChips();
+  }
+
+  function renderSelectedChips() {
+    const container = document.getElementById('topic-selected');
+    if (!container) return;
+    if (setupState.selectedTopics.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    container.innerHTML = setupState.selectedTopics.map(cat => `
+      <button class="topic-chip" onclick="window.app.toggleTopic('${escapeJs(cat)}')" title="Remove">
+        ${CATEGORY_ICONS[cat] || '&#128196;'} ${escapeHtml(cat)} <span class="chip-x">&times;</span>
+      </button>
+    `).join('');
   }
 
   function toggleTopic(category) {
@@ -825,102 +868,146 @@
     );
   }
 
+  // ---- Reveal & Judging (with steal) ----
+  // Players who have already (incorrectly) attempted the current question.
+  let attemptedPlayers = new Set();
+  // The player currently being judged (the original answerer, or a stealer).
+  let judgingPlayer = null;
+
   function revealAnswer(timedOut = false) {
     game.stopTimer();
     const question = game.currentQuestion;
     if (!question) return;
 
-    const answerSection = document.getElementById('answer-section');
-    const playerIdx = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
+    attemptedPlayers = new Set();
+    judgingPlayer = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
 
+    const answerSection = document.getElementById('answer-section');
     answerSection.innerHTML = `
       <div class="reveal-section">
         <div class="correct-answer">
           <span class="answer-label">Correct Answer</span>
           ${escapeHtml(question.a)}
         </div>
-        ${timedOut ? '<p style="color: var(--wrong-red); margin-bottom: 15px;">Time\'s up!</p>' : ''}
-        <p style="color: rgba(255,255,255,0.5); margin-bottom: 15px; font-size: 0.9rem;">
-          Judging for: <strong style="color: ${game.players[playerIdx].color}">${escapeHtml(game.players[playerIdx].name)}</strong>
-        </p>
-        <div class="judge-buttons">
-          <button class="btn btn-success" onclick="window.app.judgeAnswer(true)">
-            &#10003; Correct
-          </button>
-          <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">
-            &#10007; Wrong
-          </button>
-          <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">
-            Skip (No points)
-          </button>
-        </div>
+        ${timedOut ? '<p class="times-up-note">Time\'s up!</p>' : ''}
+        <div id="judge-controls"></div>
+      </div>
+    `;
+    renderJudgeControls(false);
+  }
+
+  function renderJudgeControls(isSteal) {
+    const question = game.currentQuestion;
+    const controls = document.getElementById('judge-controls');
+    if (!controls || !question || judgingPlayer === null) return;
+    const p = game.players[judgingPlayer];
+
+    controls.innerHTML = `
+      <p class="judge-target">
+        ${isSteal ? '&#128176; Steal attempt &mdash; ' : 'Judging for: '}
+        <strong style="color: ${p.color}">${escapeHtml(p.name)}</strong>
+      </p>
+      <div class="judge-buttons">
+        <button class="btn btn-success" onclick="window.app.judgeAnswer(true)">&#10003; Correct (+$${question.points})</button>
+        <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Wrong (-$${question.points})</button>
+        ${attemptedPlayers.size === 0
+          ? '<button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip (no points)</button>'
+          : ''}
       </div>
     `;
   }
 
   function judgeAnswer(isCorrect) {
     const question = game.currentQuestion;
-    if (!question) return;
-
-    const playerIdx = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
+    if (!question || judgingPlayer === null) return;
     const modal = document.getElementById('question-modal');
 
-    game.answerQuestion(question.cellKey, isCorrect, playerIdx);
-
     if (isCorrect) {
+      game.adjustScore(judgingPlayer, question.points);
       sound.playCorrect();
+      modal.classList.remove('flash-wrong');
       modal.classList.add('flash-correct');
-
-      // Confetti
       const rect = modal.getBoundingClientRect();
       particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
       particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
-    } else {
-      sound.playWrong();
-      modal.classList.add('flash-wrong');
+      renderScoreboard();
+      setTimeout(finishQuestion, 900);
+      return;
     }
 
-    setTimeout(() => {
-      closeQuestionModal();
-      game.nextPlayer();
-      renderScoreboard();
-      renderBoard();
+    // Wrong answer: deduct, then offer the question to anyone who hasn't tried.
+    game.adjustScore(judgingPlayer, -question.points);
+    attemptedPlayers.add(judgingPlayer);
+    sound.playWrong();
+    modal.classList.add('flash-wrong');
+    setTimeout(() => modal.classList.remove('flash-wrong'), 500);
+    renderScoreboard();
 
-      if (game.isGameOver) {
-        setTimeout(() => showResults(), 500);
-      }
-    }, 800);
+    const remaining = game.players.map((_, i) => i).filter(i => !attemptedPlayers.has(i));
+    if (remaining.length > 0) {
+      enterStealMode(remaining);
+    } else {
+      setTimeout(finishQuestion, 500);
+    }
+  }
+
+  function enterStealMode(remaining) {
+    const controls = document.getElementById('judge-controls');
+    if (!controls) return;
+    sound.playReveal();
+    controls.innerHTML = `
+      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points (wrong = lose them).</p>
+      <div class="steal-players">
+        ${remaining.map(i => `
+          <button class="player-select-btn steal-btn" style="border-color: ${game.players[i].color}"
+                  onclick="window.app.selectStealer(${i})">
+            ${escapeHtml(game.players[i].name)}
+          </button>
+        `).join('')}
+      </div>
+      <div class="judge-buttons" style="margin-top: 14px;">
+        <button class="btn btn-secondary" onclick="window.app.stealPass()">No steal &mdash; move on</button>
+      </div>
+    `;
+  }
+
+  function selectStealer(index) {
+    judgingPlayer = index;
+    sound.playClick();
+    renderJudgeControls(true);
+  }
+
+  function stealPass() {
+    sound.playClick();
+    finishQuestion();
   }
 
   function skipQuestion() {
     game.stopTimer();
     const question = game.currentQuestion;
     if (!question) return;
-
     game.skipQuestion(question.cellKey);
     closeQuestionModal();
     game.nextPlayer();
     renderScoreboard();
     renderBoard();
-
-    if (game.isGameOver) {
-      setTimeout(() => showResults(), 500);
-    }
+    if (game.isGameOver) setTimeout(() => showResults(), 500);
   }
 
+  // Skip from the reveal screen / end the question with no further scoring.
   function skipFromReveal() {
-    const question = game.currentQuestion;
-    if (!question) return;
+    finishQuestion();
+  }
 
-    game.skipQuestion(question.cellKey);
+  // Close out the current question (cell resolved once), advance the turn.
+  function finishQuestion() {
+    const question = game.currentQuestion;
+    if (question) game.markAnswered(question.cellKey);
     closeQuestionModal();
     game.nextPlayer();
     renderScoreboard();
     renderBoard();
-
-    if (game.isGameOver) {
-      setTimeout(() => showResults(), 500);
-    }
+    if (game.isGameOver) setTimeout(() => showResults(), 500);
   }
 
   function closeQuestionModal() {
@@ -928,6 +1015,8 @@
     const overlay = document.getElementById('question-overlay');
     overlay.classList.remove('active');
     selectedAnsweringPlayer = null;
+    attemptedPlayers = new Set();
+    judgingPlayer = null;
   }
 
   // ---- Interactive Challenge ----
@@ -1047,8 +1136,8 @@
         </p>
         <div class="judge-buttons">
           ${isSuccess ?
-            `<button class="btn btn-success" onclick="window.app.judgeAnswer(true)">&#10003; Award $${question.points}</button>` :
-            `<button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Deduct $${question.points}</button>
+            `<button class="btn btn-success" onclick="window.app.awardChallenge(true)">&#10003; Award $${question.points}</button>` :
+            `<button class="btn btn-danger" onclick="window.app.awardChallenge(false)">&#10007; Deduct $${question.points}</button>
              <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip (No points)</button>`
           }
         </div>
@@ -1063,6 +1152,23 @@
     } else {
       sound.playWrong();
     }
+  }
+
+  // Settle an interactive challenge (single player; no steal).
+  function awardChallenge(isCorrect) {
+    const question = game.currentQuestion;
+    if (!question) return;
+    const playerIdx = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
+    const modal = document.getElementById('question-modal');
+    game.adjustScore(playerIdx, isCorrect ? question.points : -question.points);
+    if (isCorrect) {
+      modal.classList.add('flash-correct');
+    } else {
+      sound.playWrong();
+      modal.classList.add('flash-wrong');
+    }
+    renderScoreboard();
+    setTimeout(finishQuestion, 800);
   }
 
   // ---- Results Screen ----
@@ -1402,6 +1508,7 @@
     selectTimer,
     proceedFromSetup,
     toggleTopic,
+    filterTopics,
     surpriseMe,
     startTopicGame,
     shareCurrentGame,
@@ -1415,9 +1522,12 @@
     selectAnsweringPlayer,
     revealAnswer,
     judgeAnswer,
+    selectStealer,
+    stealPass,
     skipQuestion,
     skipFromReveal,
     startChallenge,
+    awardChallenge,
     saveCurrentGame,
     loadSavedGame,
     deleteSavedGame,

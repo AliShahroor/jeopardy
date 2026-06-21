@@ -145,7 +145,14 @@
       <h2 class="section-title">Choose Your Categories</h2>
       <p class="topic-counter" id="topic-counter"><span>0</span> / 6 categories selected</p>
 
+      <div class="topic-selected" id="topic-selected"></div>
+
+      <input type="text" id="topic-search" class="input-field topic-search"
+             placeholder="🔎 Search 500+ categories (real Jeopardy + bonus genres)…"
+             autocomplete="off" oninput="app.filterTopics(this.value)">
+
       <div class="topic-grid" id="topic-grid"></div>
+      <p class="topic-more-note" id="topic-more-note"></p>
 
       <div class="topic-actions">
         <button class="btn btn-secondary" onclick="app.goBack('setup')">Back</button>
@@ -278,6 +285,7 @@
           <li>A timer counts down - answer before time runs out!</li>
           <li>After the answer is revealed, judge whether the response was correct or wrong.</li>
           <li>Correct answers add points; wrong answers deduct points.</li>
+          <li><strong>&#128176; Steal:</strong> if a player gets it wrong, any other player can try to <em>steal</em> &mdash; answer correctly to take the points, or get it wrong and lose them. Or choose "No steal" to move on.</li>
           <li>Play continues until all questions are answered.</li>
         </ul>
       </div>
@@ -297,6 +305,7 @@
           <li>2 to 4 players can compete.</li>
           <li>Players take turns selecting questions from the board.</li>
           <li>Any player can be selected to answer (use the player buttons in the question modal).</li>
+          <li>Wrong answers can be <strong>stolen</strong> by other players &mdash; so staying sharp on every question pays off.</li>
           <li>The player with the highest score at the end wins!</li>
         </ul>
       </div>
@@ -328,6 +337,7 @@
   </div>
 
   <!-- Scripts -->
+  <script src="jeopardy-data.js"></script>
   <script src="questions.js"></script>
   <script src="game.js"></script>
   <script src="app.js"></script>

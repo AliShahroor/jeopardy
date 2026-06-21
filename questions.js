@@ -706,33 +706,40 @@ const QUESTION_BANK = {
   ],
 
   "Flags of the World": [
-    { q: "Which country does this flag belong to?", a: "Japan", points: 200, type: "image", emoji: "🇯🇵" },
+    { q: "Easy one to start: which country does this flag belong to?", a: "Japan", points: 200, type: "image", emoji: "🇯🇵" },
     { q: "Which country does this flag belong to?", a: "United States", points: 200, type: "image", emoji: "🇺🇸" },
-    { q: "Which country does this flag belong to?", a: "France", points: 200, type: "image", emoji: "🇫🇷" },
-    { q: "Which country does this flag belong to?", a: "Brazil", points: 200, type: "image", emoji: "🇧🇷" },
+    { q: "Which country does this flag belong to?", a: "United Kingdom", points: 200, type: "image", emoji: "🇬🇧" },
     { q: "Which country does this flag belong to?", a: "Canada", points: 200, type: "image", emoji: "🇨🇦" },
+    { q: "Which country does this flag belong to?", a: "Brazil", points: 200, type: "image", emoji: "🇧🇷" },
+    { q: "Which country does this flag belong to?", a: "France", points: 400, type: "image", emoji: "🇫🇷" },
     { q: "Which country does this flag belong to?", a: "Germany", points: 400, type: "image", emoji: "🇩🇪" },
     { q: "Which country does this flag belong to?", a: "Italy", points: 400, type: "image", emoji: "🇮🇹" },
-    { q: "Which country does this flag belong to?", a: "Spain", points: 400, type: "image", emoji: "🇪🇸" },
     { q: "Which country does this flag belong to?", a: "China", points: 400, type: "image", emoji: "🇨🇳" },
     { q: "Which country does this flag belong to?", a: "India", points: 400, type: "image", emoji: "🇮🇳" },
-    { q: "Which country does this flag belong to?", a: "Sweden", points: 600, type: "image", emoji: "🇸🇪" },
-    { q: "Which country does this flag belong to?", a: "Greece", points: 600, type: "image", emoji: "🇬🇷" },
-    { q: "Which country does this flag belong to?", a: "Turkey", points: 600, type: "image", emoji: "🇹🇷" },
-    { q: "Which country does this flag belong to?", a: "Mexico", points: 600, type: "image", emoji: "🇲🇽" },
+    { q: "Getting trickier &mdash; which country does this flag belong to?", a: "Spain", points: 600, type: "image", emoji: "🇪🇸" },
     { q: "Which country does this flag belong to?", a: "South Korea", points: 600, type: "image", emoji: "🇰🇷" },
-    { q: "Which country does this flag belong to?", a: "Portugal", points: 800, type: "image", emoji: "🇵🇹" },
+    { q: "Which country does this flag belong to?", a: "Mexico", points: 600, type: "image", emoji: "🇲🇽" },
+    { q: "Which country does this flag belong to?", a: "Turkey", points: 600, type: "image", emoji: "🇹🇷" },
+    { q: "Which country does this flag belong to?", a: "Greece", points: 600, type: "image", emoji: "🇬🇷" },
+    { q: "Tough one: which country does this flag belong to?", a: "Portugal", points: 800, type: "image", emoji: "🇵🇹" },
+    { q: "Which country does this flag belong to?", a: "South Africa", points: 800, type: "image", emoji: "🇿🇦" },
     { q: "Which country does this flag belong to?", a: "Argentina", points: 800, type: "image", emoji: "🇦🇷" },
-    { q: "Which country does this flag belong to?", a: "Egypt", points: 800, type: "image", emoji: "🇪🇬" },
-    { q: "Which country does this flag belong to?", a: "Switzerland", points: 800, type: "image", emoji: "🇨🇭" },
-    { q: "Which country does this flag belong to?", a: "Qatar", points: 800, type: "image", emoji: "🇶🇦" },
-    { q: "Which country does this flag belong to?", a: "Nepal", points: 1000, type: "image", emoji: "🇳🇵" },
-    { q: "Which country does this flag belong to?", a: "South Africa", points: 1000, type: "image", emoji: "🇿🇦" },
-    { q: "Which country does this flag belong to?", a: "Jamaica", points: 1000, type: "image", emoji: "🇯🇲" },
-    { q: "Which country does this flag belong to?", a: "Kenya", points: 1000, type: "image", emoji: "🇰🇪" },
-    { q: "Which country does this flag belong to?", a: "Morocco", points: 1000, type: "image", emoji: "🇲🇦" }
+    { q: "Careful, this red-and-white flag is often confused with Monaco &mdash; which country is it?", a: "Indonesia", points: 800, type: "image", emoji: "🇮🇩" },
+    { q: "Which country does this flag belong to?", a: "Philippines", points: 800, type: "image", emoji: "🇵🇭" },
+    { q: "Expert level &mdash; this flag is nearly identical to Romania's. Which country is it?", a: "Chad", points: 1000, type: "image", emoji: "🇹🇩" },
+    { q: "Very few people get this one. Which country does this flag belong to?", a: "Bhutan", points: 1000, type: "image", emoji: "🇧🇹" },
+    { q: "Which Central Asian country does this flag belong to?", a: "Kazakhstan", points: 1000, type: "image", emoji: "🇰🇿" },
+    { q: "Which Central Asian country does this flag belong to?", a: "Turkmenistan", points: 1000, type: "image", emoji: "🇹🇲" },
+    { q: "Final boss flag: which Pacific island nation is this?", a: "Kiribati", points: 1000, type: "image", emoji: "🇰🇮" }
   ]
 };
+
+// Merge in the authentic Jeopardy categories from the J!Archive dataset
+// (loaded via jeopardy-data.js before this file). These real categories have
+// natural difficulty scaling built in: $200 clues are easiest, $1000 hardest.
+if (typeof REAL_CATEGORIES !== 'undefined') {
+  Object.assign(QUESTION_BANK, REAL_CATEGORIES);
+}
 
 // Interactive challenge answer sets
 const CHALLENGE_ANSWERS = {
