@@ -555,7 +555,7 @@
     const note = document.getElementById('topic-more-note');
     if (note) {
       if (filtered.length > shown.length) {
-        note.textContent = `Showing ${shown.length} of ${filtered.length} matches — type to narrow it down.`;
+        note.textContent = `Showing ${shown.length} of ${filtered.length} matches â type to narrow it down.`;
       } else if (filtered.length === 0) {
         note.textContent = 'No categories match your search.';
       } else {
@@ -611,7 +611,7 @@
     setupState.selectedTopics = shuffled.slice(0, 6);
     sound.playBoardReveal();
     renderTopicGrid();
-    showToast('Picked 6 random categories — hit Start!', 'success');
+    showToast('Picked 6 random categories â hit Start!', 'success');
   }
 
   function startTopicGame() {
@@ -890,7 +890,7 @@
         <div class="timer-bar-wrapper">
           <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
         </div>
-        <div class="timer-display" id="timer-display">${game.timerDuration}</div>
+        <div class="timer-display" id="timer-display">${game.timerDuration || "∞"}</div>
       </div>
       <div class="player-selector" id="player-selector">
         ${game.players.map((p, i) => `
@@ -948,7 +948,7 @@
         <div class="timer-bar-wrapper">
           <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
         </div>
-        <div class="timer-display" id="timer-display">${game.timerDuration}</div>
+        <div class="timer-display" id="timer-display">${game.timerDuration || "∞"}</div>
       </div>
       <div class="player-selector" id="player-selector">
         ${game.players.map((p, i) => `
@@ -1036,6 +1036,13 @@
     const timerDisplay = document.getElementById('timer-display');
     const totalTime = game.timerDuration;
 
+    // No-timer mode: leave the bar full, show infinity, never auto-reveal.
+    if (!totalTime) {
+      if (timerDisplay) timerDisplay.textContent = 'â';
+      if (timerBar) timerBar.style.width = '100%';
+      return;
+    }
+
     game.startTimer(totalTime,
       (remaining) => {
         const percent = (remaining / totalTime) * 100;
@@ -1102,7 +1109,7 @@
       </p>
       <div class="judge-buttons">
         <button class="btn btn-success" onclick="window.app.judgeAnswer(true)">&#10003; Correct (+$${question.points})</button>
-        <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Wrong (-$${question.points})</button>
+        <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Wrong (no points)</button>
         ${attemptedPlayers.size === 0
           ? '<button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip (no points)</button>'
           : ''}
@@ -1128,8 +1135,7 @@
       return;
     }
 
-    // Wrong answer: deduct, then offer the question to anyone who hasn't tried.
-    game.adjustScore(judgingPlayer, -question.points);
+    // Wrong answer: no penalty (just no points). Offer it to anyone who hasn't tried.
     attemptedPlayers.add(judgingPlayer);
     sound.playWrong();
     modal.classList.add('flash-wrong');
@@ -1149,7 +1155,7 @@
     if (!controls) return;
     sound.playReveal();
     controls.innerHTML = `
-      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points (wrong = lose them).</p>
+      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points. No penalty for a wrong guess.</p>
       <div class="steal-players">
         ${remaining.map(i => `
           <button class="player-select-btn steal-btn" style="border-color: ${game.players[i].color}"
@@ -1330,8 +1336,7 @@
         <div class="judge-buttons">
           ${isSuccess ?
             `<button class="btn btn-success" onclick="window.app.awardChallenge(true)">&#10003; Award $${question.points}</button>` :
-            `<button class="btn btn-danger" onclick="window.app.awardChallenge(false)">&#10007; Deduct $${question.points}</button>
-             <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip (No points)</button>`
+            `<button class="btn btn-secondary" onclick="window.app.awardChallenge(false)">&#10007; No points</button>`
           }
         </div>
       </div>
@@ -1353,8 +1358,8 @@
     if (!question) return;
     const playerIdx = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
     const modal = document.getElementById('question-modal');
-    game.adjustScore(playerIdx, isCorrect ? question.points : -question.points);
     if (isCorrect) {
+      game.adjustScore(playerIdx, question.points); // wrong = no points (no penalty)
       modal.classList.add('flash-correct');
     } else {
       sound.playWrong();
@@ -1551,7 +1556,7 @@
     if (!input) return;
     input.focus();
     input.select();
-    const done = () => { if (hint) hint.textContent = '✓ Link copied! Send it to your friends.'; sound.playCorrect(); };
+    const done = () => { if (hint) hint.textContent = 'â Link copied! Send it to your friends.'; sound.playCorrect(); };
     const fail = () => { if (hint) hint.textContent = 'Press Ctrl/Cmd+C to copy the selected link.'; };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(input.value).then(done).catch(() => {
