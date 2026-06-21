@@ -19,18 +19,29 @@ class JeopardyGame {
     this.currentQuestion = null;
     this.challengeCorrectAnswers = [];
     this.challengeTimer = null;
+    this.bonusLifelines = 2; // head-to-head bonus rounds remaining
+  }
+
+  // Build the players array from either plain names or {name, members} objects.
+  buildPlayers(players) {
+    return players.map((p, index) => {
+      const isObj = p && typeof p === 'object';
+      return {
+        name: isObj ? p.name : p,
+        members: isObj && Array.isArray(p.members) ? p.members : [],
+        isTeam: !!(isObj && p.members),
+        score: 0,
+        color: this.getPlayerColor(index),
+        id: index
+      };
+    });
   }
 
   // Initialize a new game with topic mode
   initTopicGame(categories, players, timerDuration, gameName) {
     this.gameMode = 'topic';
     this.categories = categories;
-    this.players = players.map((name, index) => ({
-      name: name,
-      score: 0,
-      color: this.getPlayerColor(index),
-      id: index
-    }));
+    this.players = this.buildPlayers(players);
     this.timerDuration = timerDuration;
     this.gameName = gameName || 'Untitled Game';
     this.board = buildGameBoard(categories);
@@ -39,18 +50,14 @@ class JeopardyGame {
     this.answeredCount = 0;
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
+    this.bonusLifelines = 2;
   }
 
   // Initialize a custom game
   initCustomGame(customBoard, players, timerDuration, gameName) {
     this.gameMode = 'custom';
     this.categories = Object.keys(customBoard);
-    this.players = players.map((name, index) => ({
-      name: name,
-      score: 0,
-      color: this.getPlayerColor(index),
-      id: index
-    }));
+    this.players = this.buildPlayers(players);
     this.timerDuration = timerDuration;
     this.gameName = gameName || 'Custom Game';
     this.board = customBoard;
@@ -59,6 +66,7 @@ class JeopardyGame {
     this.answeredCount = 0;
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
+    this.bonusLifelines = 2;
   }
 
   // Load a saved game state
@@ -74,6 +82,7 @@ class JeopardyGame {
     this.totalCells = state.totalCells;
     this.answeredCount = state.answeredCount;
     this.isGameOver = state.isGameOver;
+    this.bonusLifelines = state.bonusLifelines != null ? state.bonusLifelines : 2;
   }
 
   // Save game state
@@ -90,6 +99,7 @@ class JeopardyGame {
       totalCells: this.totalCells,
       answeredCount: this.answeredCount,
       isGameOver: this.isGameOver,
+      bonusLifelines: this.bonusLifelines,
       savedAt: new Date().toISOString()
     };
   }

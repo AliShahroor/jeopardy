@@ -111,13 +111,54 @@
                placeholder="My Jeopardy Game" maxlength="30">
       </div>
 
-      <!-- Players -->
-      <div class="setup-section">
+      <!-- Format: Individuals vs Teams -->
+      <div class="setup-section" id="setup-format-section">
+        <h3>Who's Playing?</h3>
+        <div class="mode-selector">
+          <div class="mode-card selected" data-format="individual" onclick="app.selectFormat('individual')">
+            <div class="mode-icon">&#128100;</div>
+            <h3>Individuals</h3>
+            <p>Everyone plays for themselves (2&ndash;4 players)</p>
+          </div>
+          <div class="mode-card" data-format="teams" onclick="app.selectFormat('teams')">
+            <div class="mode-icon">&#128101;</div>
+            <h3>Teams</h3>
+            <p>Play in groups &mdash; name them yourself or split players randomly</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players (Individuals) -->
+      <div class="setup-section" id="setup-players-section">
         <h3>Players (2-4)</h3>
         <div class="player-inputs" id="player-inputs"></div>
         <button class="btn btn-secondary btn-small add-player-btn" onclick="app.addPlayer()">
           + Add Player
         </button>
+      </div>
+
+      <!-- Teams -->
+      <div class="setup-section" id="setup-teams-section" style="display:none;">
+        <h3>Teams</h3>
+        <div class="team-count-row">
+          <span>Number of teams:</span>
+          <div class="timer-selector">
+            <button class="timer-option selected" data-teams="2" onclick="app.selectTeamCount(2)">2</button>
+            <button class="timer-option" data-teams="3" onclick="app.selectTeamCount(3)">3</button>
+            <button class="timer-option" data-teams="4" onclick="app.selectTeamCount(4)">4</button>
+          </div>
+        </div>
+        <div class="team-mode-row">
+          <button class="team-mode-btn selected" data-teammode="named" onclick="app.selectTeamMode('named')">&#9997; Name teams &amp; players</button>
+          <button class="team-mode-btn" data-teammode="random" onclick="app.selectTeamMode('random')">&#127922; Random teams</button>
+        </div>
+        <div id="team-named-area"></div>
+        <div id="team-random-area" style="display:none;">
+          <label style="display:block; color: rgba(255,215,0,0.7); margin-bottom: 8px;">Enter all players (one per line or comma-separated):</label>
+          <textarea id="team-random-pool" class="input-field" rows="4" placeholder="Ali, Bayan, Sam, Omar, Lina, Yusuf..."></textarea>
+          <button class="btn btn-secondary btn-small" style="margin-top:10px;" onclick="app.shuffleTeams()">&#127922; Shuffle into teams</button>
+          <div id="team-random-preview" class="team-preview"></div>
+        </div>
       </div>
 
       <!-- Timer -->
@@ -191,6 +232,9 @@
         <button class="btn btn-secondary btn-small" onclick="app.shareCurrentGame()">
           &#128279; Share
         </button>
+        <button class="btn btn-bonus btn-small" id="bonus-btn" onclick="app.openBonus()">
+          &#9889; Bonus (2)
+        </button>
         <button class="sound-toggle" id="sound-toggle" onclick="app.toggleSound()">&#128264;</button>
         <button class="btn btn-danger btn-small" onclick="app.endGameEarly()">
           End Game
@@ -210,6 +254,11 @@
       <div class="modal-points" id="modal-points"></div>
       <div id="modal-content"></div>
     </div>
+  </div>
+
+  <!-- ===== BONUS ROUND MODAL ===== -->
+  <div class="modal-overlay" id="bonus-overlay">
+    <div class="bonus-modal glass-card" id="bonus-modal"></div>
   </div>
 
   <!-- ===== SHARE MODAL ===== -->
@@ -300,9 +349,11 @@
       </div>
 
       <div class="glass-card howto-section">
-        <h3><span class="howto-icon">&#128101;</span> Multiplayer</h3>
+        <h3><span class="howto-icon">&#128101;</span> Players & Teams</h3>
         <ul>
-          <li>2 to 4 players can compete.</li>
+          <li>Choose <strong>Individuals</strong> (2&ndash;4 players) or <strong>Teams</strong> in setup.</li>
+          <li>For teams, either <strong>name the teams and their members</strong> yourself, or paste a list of everyone and hit <strong>&#127922; Shuffle into teams</strong> to split them randomly.</li>
+          <li>2 to 4 players or teams can compete.</li>
           <li>Players take turns selecting questions from the board.</li>
           <li>Any player can be selected to answer (use the player buttons in the question modal).</li>
           <li>Wrong answers can be <strong>stolen</strong> by other players &mdash; so staying sharp on every question pays off.</li>
@@ -311,12 +362,22 @@
       </div>
 
       <div class="glass-card howto-section">
+        <h3><span class="howto-icon">&#9889;</span> Bonus Rounds (Lifeline)</h3>
+        <ul>
+          <li>Tap <strong>&#9889; Bonus</strong> mid-game to start a head-to-head duel.</li>
+          <li>Two contestants are picked at random (re-roll or change them if you like) &mdash; or skip it entirely, it's optional.</li>
+          <li>Each gets 30&ndash;60 seconds to answer as many rapid-fire questions as possible.</li>
+          <li>Most correct answers wins <strong>+$250</strong>. You get <strong>2 bonus rounds per game</strong>.</li>
+        </ul>
+      </div>
+
+      <div class="glass-card howto-section">
         <h3><span class="howto-icon">&#128190;</span> Save & Load</h3>
         <ul>
           <li>Click "Save" during a game to save your progress.</li>
-          <li>Access saved games from the main menu.</li>
-          <li>Games are saved per user using your browser's local storage.</li>
-          <li>You can save multiple games and continue them later.</li>
+          <li>It remembers <strong>everything</strong> &mdash; the board, every score, whose turn it is, which questions are answered, your timer, and bonus rounds left.</li>
+          <li>Access saved games from the main menu and continue right where you left off.</li>
+          <li>Games are saved per user in your browser. You can keep multiple saves.</li>
         </ul>
       </div>
 

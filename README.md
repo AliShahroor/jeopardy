@@ -21,9 +21,17 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
   - **Interactive challenges** — rapid-fire rounds like *"Name 30 European
     countries in 60 seconds"*.
 - **Adjustable timer** per question (30s → 2 min), changeable per game.
-- **2–4 players**, scoreboard, turn tracking, correct/wrong judging.
+- **Individuals or Teams** — play solo (2–4 players) or in groups. Name the
+  teams and members yourself, or paste a list of people and **shuffle them into
+  random teams**.
+- **2–4 players/teams**, scoreboard (teams show their members), turn tracking.
 - **💰 Steal** — when a player answers wrong, any other player can steal:
   answer correctly to take the points, or get it wrong and lose them.
+- **⚡ Bonus Rounds (lifeline)** — twice per game, trigger a head-to-head duel:
+  two contestants each get 30–60s to answer as many rapid-fire questions as
+  they can; the winner takes **+$250**. Optional every time.
+- **💾 Save / Load** — remembers the entire game: board, every score, whose
+  turn it is, answered cells, timer, and bonus rounds left.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact
   board (categories, questions, timer). No account needed. Great for sharing a
   custom quiz with friends.

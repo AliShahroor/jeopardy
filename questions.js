@@ -734,11 +734,39 @@ const QUESTION_BANK = {
   ]
 };
 
-// Merge in the authentic Jeopardy categories from the J!Archive dataset
-// (loaded via jeopardy-data.js before this file). These real categories have
-// natural difficulty scaling built in: $200 clues are easiest, $1000 hardest.
+// Merge in the broad, exciting themes built from the J!Archive dataset
+// (loaded via jeopardy-data.js before this file). Each theme holds a large pool
+// of real clues per point tier, so every click pulls a fresh random question.
 if (typeof REAL_CATEGORIES !== 'undefined') {
   Object.assign(QUESTION_BANK, REAL_CATEGORIES);
+}
+
+// Curate the playable board to 25 broad, exciting categories. Anything not in
+// this list (older narrow placeholders) is removed from the active set.
+const ACTIVE_CATEGORIES = [
+  // Real Jeopardy themes (hundreds of well-known clues, fully randomized)
+  'General Knowledge', 'Sports', 'History', 'Geography', 'Movies & TV', 'Music & Songs',
+  'Science', 'Animals & Nature', 'Food & Drink', 'Literature', 'Art & Culture', 'Word Play',
+  'Pop Culture', 'Technology', 'Space & Astronomy', 'Business & Brands',
+  // Bonus curated genres (modern topics the classic dataset lacks)
+  'Video Games', 'Anime & Manga', 'Superheroes', 'Football (Soccer)',
+  'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World'
+];
+Object.keys(QUESTION_BANK).forEach(k => {
+  if (ACTIVE_CATEGORIES.indexOf(k) === -1) delete QUESTION_BANK[k];
+});
+
+// Sprinkle a few rapid-fire interactive challenges into fitting categories.
+if (QUESTION_BANK['Geography']) {
+  QUESTION_BANK['Geography'].push(
+    { q: "Name 30 European countries in 60 seconds!", a: null, points: 1000, type: "interactive", challenge: "european_countries", timeLimit: 60, target: 30 },
+    { q: "Name 25 world capitals in 60 seconds!", a: null, points: 800, type: "interactive", challenge: "world_capitals", timeLimit: 60, target: 25 }
+  );
+}
+if (QUESTION_BANK['General Knowledge']) {
+  QUESTION_BANK['General Knowledge'].push(
+    { q: "Name 20 U.S. states in 45 seconds!", a: null, points: 800, type: "interactive", challenge: "us_states", timeLimit: 45, target: 20 }
+  );
 }
 
 // Interactive challenge answer sets

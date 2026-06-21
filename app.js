@@ -12,6 +12,10 @@
   let pendingSharedGame = null;
   let setupState = {
     mode: 'topic',
+    format: 'individual',     // 'individual' | 'teams'
+    teamCount: 2,
+    teamMode: 'named',        // 'named' | 'random'
+    teams: [],                // [{ name, members: [] }]
     players: ['Player 1', 'Player 2'],
     timer: 30,
     gameName: '',
@@ -47,7 +51,14 @@
     "World Religions": "&#128720;",
     "Chemistry": "&#129514;",
     "Biology": "&#129516;",
-    "Flags of the World": "&#128681;"
+    "Flags of the World": "&#128681;",
+    "General Knowledge": "&#129504;",
+    "Movies & TV": "&#127916;",
+    "Music & Songs": "&#127925;",
+    "Animals & Nature": "&#128058;",
+    "Art & Culture": "&#127912;",
+    "Word Play": "&#128221;",
+    "Business & Brands": "&#128188;"
   };
 
   const PLAYER_COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A855F7'];
@@ -172,6 +183,10 @@
     // Reset setup state
     setupState = {
       mode: 'topic',
+      format: 'individual',
+      teamCount: 2,
+      teamMode: 'named',
+      teams: [],
       players: ['Player 1', 'Player 2'],
       timer: 30,
       gameName: '',
@@ -193,6 +208,10 @@
     showScreen('setup-screen');
     setupState = {
       mode: pendingSharedGame.mode || 'custom',
+      format: 'individual',
+      teamCount: 2,
+      teamMode: 'named',
+      teams: [],
       players: ['Player 1', 'Player 2'],
       timer: pendingSharedGame.timer || 30,
       gameName: pendingSharedGame.name || 'Shared Game',
@@ -212,19 +231,25 @@
   }
 
   function renderSetupScreen() {
-    // Mode selection
-    document.querySelectorAll('.mode-card').forEach(card => {
+    // Mode selection (topic / custom)
+    document.querySelectorAll('.mode-card[data-mode]').forEach(card => {
       card.classList.toggle('selected', card.dataset.mode === setupState.mode);
+    });
+
+    // Format selection (individual / teams)
+    document.querySelectorAll('.mode-card[data-format]').forEach(card => {
+      card.classList.toggle('selected', card.dataset.format === setupState.format);
     });
 
     // Game name
     document.getElementById('setup-game-name').value = setupState.gameName;
 
-    // Players
+    // Players / Teams
     renderPlayerInputs();
+    applyFormatUI();
 
     // Timer
-    document.querySelectorAll('.timer-option').forEach(opt => {
+    document.querySelectorAll('.timer-option[data-time]').forEach(opt => {
       opt.classList.toggle('selected', parseInt(opt.dataset.time) === setupState.timer);
     });
   }
@@ -232,9 +257,125 @@
   function selectMode(mode) {
     setupState.mode = mode;
     sound.playClick();
-    document.querySelectorAll('.mode-card').forEach(card => {
+    document.querySelectorAll('.mode-card[data-mode]').forEach(card => {
       card.classList.toggle('selected', card.dataset.mode === mode);
     });
+  }
+
+  // ---- Format: Individuals vs Teams ----
+  function selectFormat(fmt) {
+    setupState.format = fmt;
+    sound.playClick();
+    document.querySelectorAll('.mode-card[data-format]').forEach(card => {
+      card.classList.toggle('selected', card.dataset.format === fmt);
+    });
+    applyFormatUI();
+  }
+
+  function applyFormatUI() {
+    const isTeams = setupState.format === 'teams';
+    const playersSec = document.getElementById('setup-players-section');
+    const teamsSec = document.getElementById('setup-teams-section');
+    if (playersSec) playersSec.style.display = isTeams ? 'none' : '';
+    if (teamsSec) teamsSec.style.display = isTeams ? '' : 'none';
+    if (isTeams) renderTeamsUI();
+  }
+
+  function selectTeamCount(n) {
+    setupState.teamCount = n;
+    sound.playClick();
+    document.querySelectorAll('.timer-option[data-teams]').forEach(opt => {
+      opt.classList.toggle('selected', parseInt(opt.dataset.teams) === n);
+    });
+    renderTeamsUI();
+  }
+
+  function selectTeamMode(mode) {
+    setupState.teamMode = mode;
+    sound.playClick();
+    document.querySelectorAll('.team-mode-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.teammode === mode);
+    });
+    renderTeamsUI();
+  }
+
+  function renderTeamsUI() {
+    // Sync the count / mode button highlights to current state
+    document.querySelectorAll('.timer-option[data-teams]').forEach(opt => {
+      opt.classList.toggle('selected', parseInt(opt.dataset.teams) === setupState.teamCount);
+    });
+    document.querySelectorAll('.team-mode-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.teammode === setupState.teamMode);
+    });
+
+    const namedArea = document.getElementById('team-named-area');
+    const randomArea = document.getElementById('team-random-area');
+    const isNamed = setupState.teamMode === 'named';
+    if (namedArea) namedArea.style.display = isNamed ? '' : 'none';
+    if (randomArea) randomArea.style.display = isNamed ? 'none' : '';
+
+    // Keep the teams array sized to teamCount
+    if (!Array.isArray(setupState.teams)) setupState.teams = [];
+    while (setupState.teams.length < setupState.teamCount) {
+      const i = setupState.teams.length;
+      setupState.teams.push({ name: `Team ${i + 1}`, members: [] });
+    }
+    setupState.teams = setupState.teams.slice(0, setupState.teamCount);
+
+    if (isNamed && namedArea) {
+      namedArea.innerHTML = setupState.teams.map((t, i) => `
+        <div class="team-card">
+          <div class="team-card-head">
+            <span class="player-color-dot" style="background:${PLAYER_COLORS[i]}; color:${PLAYER_COLORS[i]}"></span>
+            <input type="text" class="input-field" value="${escapeHtml(t.name)}"
+                   placeholder="Team ${i + 1} name" maxlength="20"
+                   onchange="window.app.updateTeamName(${i}, this.value)">
+          </div>
+          <input type="text" class="input-field team-members" value="${escapeHtml((t.members || []).join(', '))}"
+                 placeholder="Members (comma-separated): e.g. Ali, Bayan"
+                 onchange="window.app.updateTeamMembers(${i}, this.value)">
+        </div>
+      `).join('');
+    }
+  }
+
+  function updateTeamName(i, val) {
+    if (setupState.teams[i]) setupState.teams[i].name = val.trim() || `Team ${i + 1}`;
+  }
+
+  function updateTeamMembers(i, val) {
+    if (setupState.teams[i]) {
+      setupState.teams[i].members = val.split(',').map(s => s.trim()).filter(Boolean);
+    }
+  }
+
+  function shuffleTeams() {
+    const raw = (document.getElementById('team-random-pool').value || '')
+      .split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+    if (raw.length < setupState.teamCount) {
+      showToast(`Enter at least ${setupState.teamCount} players to make ${setupState.teamCount} teams`, 'error');
+      return;
+    }
+    // Fisher-Yates shuffle
+    const pool = raw.slice();
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const teams = Array.from({ length: setupState.teamCount }, (_, i) => ({ name: `Team ${i + 1}`, members: [] }));
+    pool.forEach((p, idx) => teams[idx % setupState.teamCount].members.push(p));
+    setupState.teams = teams;
+    sound.playBoardReveal();
+
+    const preview = document.getElementById('team-random-preview');
+    if (preview) {
+      preview.innerHTML = teams.map((t, i) => `
+        <div class="team-preview-card" style="border-color:${PLAYER_COLORS[i]}">
+          <strong style="color:${PLAYER_COLORS[i]}">${escapeHtml(t.name)}</strong>
+          <span>${t.members.map(escapeHtml).join(', ')}</span>
+        </div>
+      `).join('');
+    }
   }
 
   function renderPlayerInputs() {
@@ -275,7 +416,7 @@
   function selectTimer(time) {
     setupState.timer = time;
     sound.playClick();
-    document.querySelectorAll('.timer-option').forEach(opt => {
+    document.querySelectorAll('.timer-option[data-time]').forEach(opt => {
       opt.classList.toggle('selected', parseInt(opt.dataset.time) === time);
     });
   }
@@ -285,19 +426,38 @@
       setupState.gameName = document.getElementById('setup-game-name').value.trim() || 'My Jeopardy Game';
     }
 
-    // Validate player names
-    const names = setupState.players.map(n => n.trim()).filter(n => n.length > 0);
-    if (names.length < 2) {
-      showToast('Need at least 2 players', 'error');
-      return;
-    }
-    setupState.players = names;
-
-    // Check for duplicate names
-    const uniqueNames = new Set(names.map(n => n.toLowerCase()));
-    if (uniqueNames.size !== names.length) {
-      showToast('Player names must be unique', 'error');
-      return;
+    if (setupState.format === 'teams') {
+      const teams = (setupState.teams || []).slice(0, setupState.teamCount).map((t, i) => ({
+        name: (t.name || `Team ${i + 1}`).trim() || `Team ${i + 1}`,
+        members: (t.members || []).slice()
+      }));
+      if (teams.length < 2) {
+        showToast('Need at least 2 teams', 'error');
+        return;
+      }
+      const tNames = teams.map(t => t.name.toLowerCase());
+      if (new Set(tNames).size !== tNames.length) {
+        showToast('Team names must be unique', 'error');
+        return;
+      }
+      if (setupState.teamMode === 'random' && teams.every(t => t.members.length === 0)) {
+        showToast('Tap "Shuffle into teams" to assign players first', 'error');
+        return;
+      }
+      setupState.players = teams; // array of {name, members}
+    } else {
+      // Validate individual player names
+      const names = setupState.players.map(n => n.trim()).filter(n => n.length > 0);
+      if (names.length < 2) {
+        showToast('Need at least 2 players', 'error');
+        return;
+      }
+      const uniqueNames = new Set(names.map(n => n.toLowerCase()));
+      if (uniqueNames.size !== names.length) {
+        showToast('Player names must be unique', 'error');
+        return;
+      }
+      setupState.players = names;
     }
 
     // Shared game: board is already built, jump straight into play
@@ -587,6 +747,7 @@
     showScreen('board-screen');
     renderBoard();
     renderScoreboard();
+    updateBonusButton();
     document.querySelector('.board-header .game-title').textContent = game.gameName;
   }
 
@@ -640,6 +801,7 @@
       <div class="player-score-card ${idx === game.currentPlayerIndex ? 'active-player' : ''}"
            style="border-color: ${idx === game.currentPlayerIndex ? player.color : 'rgba(255,255,255,0.12)'}">
         <div class="player-name" style="color: ${player.color}">${escapeHtml(player.name)}</div>
+        ${player.members && player.members.length ? `<div class="player-members">${escapeHtml(player.members.join(', '))}</div>` : ''}
         <div class="player-score ${player.score < 0 ? 'negative' : ''}">
           ${player.score < 0 ? '-' : ''}$${Math.abs(player.score)}
         </div>
@@ -1374,6 +1536,251 @@
     if (overlay) overlay.classList.remove('active');
   }
 
+  // ---- Bonus Round (head-to-head lifeline) ----
+  let bonusState = null;
+
+  function updateBonusButton() {
+    const btn = document.getElementById('bonus-btn');
+    if (!btn) return;
+    const n = game.bonusLifelines || 0;
+    btn.innerHTML = `&#9889; Bonus (${n})`;
+    btn.disabled = n <= 0;
+    btn.classList.toggle('disabled', n <= 0);
+  }
+
+  function buildBonusPool() {
+    const pool = [];
+    Object.keys(QUESTION_BANK).forEach(cat => {
+      (QUESTION_BANK[cat] || []).forEach(q => {
+        if (q.type === 'text' && q.q && q.a) pool.push({ q: q.q, a: q.a });
+      });
+    });
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    return pool;
+  }
+
+  function pickTwoPlayers() {
+    const n = game.players.length;
+    const a = Math.floor(Math.random() * n);
+    let b = Math.floor(Math.random() * n);
+    while (b === a && n > 1) b = Math.floor(Math.random() * n);
+    return { a, b };
+  }
+
+  function openBonus() {
+    if (!game.players || game.players.length < 2) return;
+    if ((game.bonusLifelines || 0) <= 0) {
+      showToast('No bonus rounds left this game', 'error');
+      return;
+    }
+    const pick = pickTwoPlayers();
+    bonusState = { a: pick.a, b: pick.b, duration: 45, scores: { a: 0, b: 0 }, current: 'a', queue: [], qIndex: 0 };
+    sound.playClick();
+    renderBonusSetup();
+    document.getElementById('bonus-overlay').classList.add('active');
+  }
+
+  function playerOption(slot) {
+    return game.players.map((p, i) =>
+      `<option value="${i}" ${bonusState[slot] === i ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+    ).join('');
+  }
+
+  function renderBonusSetup() {
+    const m = document.getElementById('bonus-modal');
+    const A = game.players[bonusState.a], B = game.players[bonusState.b];
+    m.innerHTML = `
+      <span class="bonus-icon">&#9889;</span>
+      <h2 class="bonus-title">Bonus Round &mdash; Head to Head!</h2>
+      <p class="bonus-desc">Two contestants go one at a time: answer as many questions as you can before the clock runs out. Most correct wins <strong>+$250</strong>. (Lifeline &mdash; ${game.bonusLifelines} left.)</p>
+      <div class="bonus-vs">
+        <div class="bonus-slot" style="border-color:${A.color}">
+          <label>Contestant 1</label>
+          <select class="input-field" onchange="window.app.setBonusPlayer('a', this.value)">${playerOption('a')}</select>
+        </div>
+        <div class="bonus-vs-label">VS</div>
+        <div class="bonus-slot" style="border-color:${B.color}">
+          <label>Contestant 2</label>
+          <select class="input-field" onchange="window.app.setBonusPlayer('b', this.value)">${playerOption('b')}</select>
+        </div>
+      </div>
+      <div class="bonus-duration">
+        <span>Time each:</span>
+        <div class="timer-selector">
+          ${[30, 45, 60].map(d => `<button class="timer-option ${bonusState.duration === d ? 'selected' : ''}" onclick="window.app.setBonusDuration(${d})">${d}s</button>`).join('')}
+        </div>
+      </div>
+      <div class="bonus-actions">
+        <button class="btn btn-secondary" onclick="window.app.rerollBonus()">&#127922; Re-roll</button>
+        <button class="btn btn-primary btn-large" onclick="window.app.startBonusDuel()">Start Duel</button>
+      </div>
+      <button class="btn btn-secondary btn-small bonus-cancel" onclick="window.app.closeBonus()">Cancel</button>
+    `;
+  }
+
+  function setBonusPlayer(slot, val) {
+    const idx = parseInt(val);
+    bonusState[slot] = idx;
+    const other = slot === 'a' ? 'b' : 'a';
+    if (bonusState[other] === idx) {
+      bonusState[other] = (idx + 1) % game.players.length;
+    }
+    renderBonusSetup();
+  }
+
+  function setBonusDuration(d) {
+    bonusState.duration = d;
+    sound.playClick();
+    renderBonusSetup();
+  }
+
+  function rerollBonus() {
+    const pick = pickTwoPlayers();
+    bonusState.a = pick.a;
+    bonusState.b = pick.b;
+    sound.playBoardReveal();
+    renderBonusSetup();
+  }
+
+  function startBonusDuel() {
+    if (bonusState.a === bonusState.b) {
+      showToast('Pick two different contestants', 'error');
+      return;
+    }
+    bonusState.queue = buildBonusPool();
+    bonusState.qIndex = 0;
+    bonusState.scores = { a: 0, b: 0 };
+    bonusState.current = 'a';
+    sound.playBoardReveal();
+    renderBonusIntro();
+  }
+
+  function renderBonusIntro() {
+    const m = document.getElementById('bonus-modal');
+    const slot = bonusState.current;
+    const p = game.players[slot === 'a' ? bonusState.a : bonusState.b];
+    m.innerHTML = `
+      <div class="bonus-intro">
+        <p class="bonus-intro-label">Get ready, Contestant ${slot === 'a' ? '1' : '2'}!</p>
+        <h2 class="bonus-intro-name" style="color:${p.color}">${escapeHtml(p.name)}</h2>
+        <p class="bonus-desc">${bonusState.duration} seconds &mdash; answer as many as you can. Hand the device to ${escapeHtml(p.name)}!</p>
+        <button class="btn btn-primary btn-large" onclick="window.app.beginBonusTurn()">Go!</button>
+      </div>
+    `;
+  }
+
+  function beginBonusTurn() {
+    renderBonusPlay();
+    game.startTimer(bonusState.duration,
+      (remaining) => {
+        const bar = document.getElementById('bonus-timer-bar');
+        const disp = document.getElementById('bonus-timer-display');
+        if (bar) bar.style.width = (remaining / bonusState.duration * 100) + '%';
+        if (disp) disp.textContent = remaining;
+        if (remaining <= 5) { if (bar) bar.classList.add('critical'); sound.playTimerWarning(); }
+      },
+      () => {
+        sound.playTimerEnd();
+        if (bonusState.current === 'a') {
+          bonusState.current = 'b';
+          renderBonusIntro();
+        } else {
+          endBonusDuel();
+        }
+      }
+    );
+  }
+
+  function currentBonusQuestion() {
+    if (bonusState.qIndex >= bonusState.queue.length) {
+      bonusState.queue = bonusState.queue.concat(buildBonusPool());
+    }
+    return bonusState.queue[bonusState.qIndex];
+  }
+
+  function renderBonusPlay() {
+    const m = document.getElementById('bonus-modal');
+    const slot = bonusState.current;
+    const p = game.players[slot === 'a' ? bonusState.a : bonusState.b];
+    const q = currentBonusQuestion();
+    m.innerHTML = `
+      <div class="bonus-play">
+        <div class="bonus-play-head">
+          <span style="color:${p.color}; font-weight:700">${escapeHtml(p.name)}</span>
+          <span class="bonus-score">Correct: <strong id="bonus-count">${bonusState.scores[slot]}</strong></span>
+        </div>
+        <div class="timer-bar-wrapper"><div class="timer-bar" id="bonus-timer-bar" style="width:100%"></div></div>
+        <div class="timer-display" id="bonus-timer-display">${bonusState.duration}</div>
+        <div class="bonus-question">${escapeHtml(q.q)}</div>
+        <div class="bonus-answer" id="bonus-answer" style="display:none;">Answer: <strong>${escapeHtml(q.a)}</strong></div>
+        <div class="bonus-play-actions">
+          <button class="btn btn-secondary btn-small" onclick="window.app.bonusPeek()">&#128065; Check</button>
+          <button class="btn btn-success" onclick="window.app.bonusCorrect()">&#10003; Correct</button>
+          <button class="btn btn-secondary" onclick="window.app.bonusSkip()">Skip &rarr;</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function bonusPeek() {
+    const a = document.getElementById('bonus-answer');
+    if (a) a.style.display = a.style.display === 'none' ? 'block' : 'none';
+  }
+
+  function bonusAdvance(correct) {
+    const slot = bonusState.current;
+    if (correct) { bonusState.scores[slot]++; sound.playChallengeCorrect(); }
+    bonusState.qIndex++;
+    renderBonusPlay();
+  }
+  function bonusCorrect() { bonusAdvance(true); }
+  function bonusSkip() { bonusAdvance(false); }
+
+  function endBonusDuel() {
+    game.stopTimer();
+    const sa = bonusState.scores.a, sb = bonusState.scores.b;
+    const A = game.players[bonusState.a], B = game.players[bonusState.b];
+    let resultHtml;
+    if (sa === sb) {
+      resultHtml = `<p class="bonus-result-tie">It's a tie at ${sa}! No bonus awarded.</p>`;
+    } else {
+      const winIdx = sa > sb ? bonusState.a : bonusState.b;
+      const win = game.players[winIdx];
+      game.adjustScore(winIdx, 250);
+      resultHtml = `<p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$250!</p>`;
+    }
+    if (game.bonusLifelines > 0) game.bonusLifelines--;
+    updateBonusButton();
+    renderScoreboard();
+
+    const m = document.getElementById('bonus-modal');
+    m.innerHTML = `
+      <span class="bonus-icon">&#127942;</span>
+      <h2 class="bonus-title">Bonus Results</h2>
+      <div class="bonus-final">
+        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(A.name)}</span><strong>${sa} correct</strong></div>
+        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(B.name)}</span><strong>${sb} correct</strong></div>
+      </div>
+      ${resultHtml}
+      <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>
+    `;
+    if (sa !== sb) {
+      const rect = m.getBoundingClientRect();
+      particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 50);
+      sound.playGameOver();
+    }
+  }
+
+  function closeBonus() {
+    game.stopTimer();
+    const overlay = document.getElementById('bonus-overlay');
+    if (overlay) overlay.classList.remove('active');
+    bonusState = null;
+  }
+
   // ---- How To Play ----
   function showHowToPlay() {
     sound.playClick();
@@ -1502,6 +1909,12 @@
     showSavedGames,
     showHowToPlay,
     selectMode,
+    selectFormat,
+    selectTeamCount,
+    selectTeamMode,
+    updateTeamName,
+    updateTeamMembers,
+    shuffleTeams,
     addPlayer,
     removePlayer,
     updatePlayerName,
@@ -1514,6 +1927,16 @@
     shareCurrentGame,
     copyShareLink,
     closeShare,
+    openBonus,
+    setBonusPlayer,
+    setBonusDuration,
+    rerollBonus,
+    startBonusDuel,
+    beginBonusTurn,
+    bonusPeek,
+    bonusCorrect,
+    bonusSkip,
+    closeBonus,
     switchCustomTab,
     updateCategoryName,
     updateCustomQuestion,
