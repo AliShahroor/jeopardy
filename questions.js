@@ -750,11 +750,26 @@ const ACTIVE_CATEGORIES = [
   'Space & Astronomy', 'Art & Literature', 'Pop Culture', 'Famous Landmarks',
   // Bonus curated genres
   'Video Games', 'Anime & Manga', 'Superheroes', 'Football (Soccer)',
-  'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World'
+  'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World',
+  // New categories
+  'Logos & Brands', 'Cartoons & Animation', 'TV Shows'
 ];
 Object.keys(QUESTION_BANK).forEach(k => {
   if (ACTIVE_CATEGORIES.indexOf(k) === -1) delete QUESTION_BANK[k];
 });
+
+// Merge extra questions (more variety, less repetition) + new categories,
+// de-duping by question text so nothing appears twice in a category.
+if (typeof EXTRA_QUESTIONS !== 'undefined') {
+  Object.keys(EXTRA_QUESTIONS).forEach(cat => {
+    if (!QUESTION_BANK[cat]) QUESTION_BANK[cat] = [];
+    const seen = new Set(QUESTION_BANK[cat].map(q => (q.q || '').toLowerCase().trim()));
+    EXTRA_QUESTIONS[cat].forEach(q => {
+      const key = (q.q || '').toLowerCase().trim();
+      if (!seen.has(key)) { QUESTION_BANK[cat].push(q); seen.add(key); }
+    });
+  });
+}
 
 // Sprinkle a few rapid-fire interactive challenges into fitting categories.
 if (QUESTION_BANK['Geography']) {

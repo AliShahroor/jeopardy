@@ -2151,3 +2151,42 @@ textarea.input-field {
 
 /* Answer stays hidden until the question resolves (so steals are fair) */
 .hidden-answer { display: none !important; }
+
+/* ===================== Resolve panel (who got it right) ===================== */
+.judge-pts { color: var(--gold); font-weight: 700; }
+.resolve-players { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.resolve-btn {
+  padding: 12px 22px; border-radius: 10px; cursor: pointer;
+  background: rgba(0,0,0,0.25); border: 2px solid var(--glass-border);
+  font-size: 1.05rem; font-weight: 700; transition: all 0.18s ease;
+}
+.resolve-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.08); }
+.resolve-btn.is-turn { box-shadow: 0 0 0 2px rgba(255,215,0,0.35) inset; }
+
+/* ===================== Adjust modal ===================== */
+#adjust-overlay .adjust-modal { max-width: 460px; width: 92%; margin: 0 auto; padding: 30px 26px; text-align: center; }
+.adjust-help { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 14px; }
+.adjust-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; text-align: left; }
+.adjust-row .adjust-turn { display: flex; align-items: center; }
+.adjust-row .adjust-turn input { width: 20px; height: 20px; accent-color: var(--gold); cursor: pointer; }
+.adjust-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+.adjust-name { flex: 1; font-weight: 700; }
+.adjust-row .adjust-score { width: 110px; text-align: center; }
+
+/* ===================== Bonus: face-off, reps, Family Feud ===================== */
+.bonus-mode-toggle { flex-wrap: wrap; }
+.bonus-faceoff { display: flex; gap: 10px; justify-content: center; margin-bottom: 14px; }
+.bonus-reps { text-align: center; color: var(--gold-light); font-size: 1.05rem; margin: 10px 0; }
+.bonus-reps small { color: rgba(255,255,255,0.55); }
+.bonus-feud-q { font-size: 1.25rem; color: #fff; margin: 8px 0 6px; line-height: 1.4; }
+.feud-board { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+.feud-slot {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 12px 16px; border-radius: 10px; cursor: pointer; text-align: left;
+  background: linear-gradient(135deg, rgba(6,12,233,0.35), rgba(0,11,140,0.35));
+  border: 2px solid var(--glass-border); color: rgba(255,255,255,0.55);
+  font-size: 1.05rem; transition: all 0.2s ease;
+}
+.feud-slot.revealed { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: var(--dark); border-color: var(--gold); font-weight: 700; }
+.feud-rank { width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+.feud-slot.revealed .feud-rank { background: rgba(0,0,0,0.25); color: #fff; }

@@ -19,7 +19,7 @@ class JeopardyGame {
     this.currentQuestion = null;
     this.challengeCorrectAnswers = [];
     this.challengeTimer = null;
-    this.bonusLifelines = 2; // head-to-head bonus rounds remaining
+    this.bonusLifelines = 3; // head-to-head bonus rounds remaining
   }
 
   // Build the players array from either plain names or {name, members} objects.
@@ -78,7 +78,7 @@ class JeopardyGame {
     this.answeredCount = 0;
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
-    this.bonusLifelines = 2;
+    this.bonusLifelines = 3;
   }
 
   // Initialize a custom game
@@ -94,7 +94,7 @@ class JeopardyGame {
     this.answeredCount = 0;
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
-    this.bonusLifelines = 2;
+    this.bonusLifelines = 3;
   }
 
   // Load a saved game state

@@ -18,6 +18,7 @@
     teams: [],                // [{ name, members: [] }]
     players: ['Player 1', 'Player 2'],
     timer: 30,
+    bonusRounds: 3,
     gameName: '',
     selectedTopics: [],
     customBoard: {},
@@ -60,7 +61,10 @@
     "Famous People": "&#128100;",
     "Technology & Inventions": "&#128161;",
     "Art & Literature": "&#127912;",
-    "Famous Landmarks": "&#127963;"
+    "Famous Landmarks": "&#127963;",
+    "Logos & Brands": "&#127991;",
+    "Cartoons & Animation": "&#128371;",
+    "TV Shows": "&#128250;"
   };
 
   const PLAYER_COLORS = ['#FF6B6B', '#4ECDC4', '#FFE66D', '#A855F7'];
@@ -191,6 +195,7 @@
       teams: [],
       players: ['Player 1', 'Player 2'],
       timer: 30,
+      bonusRounds: 3,
       gameName: '',
       selectedTopics: [],
       customBoard: {},
@@ -217,6 +222,7 @@
       teams: [],
       players: ['Player 1', 'Player 2'],
       timer: pendingSharedGame.timer || 30,
+      bonusRounds: 3,
       gameName: pendingSharedGame.name || 'Shared Game',
       selectedTopics: [],
       customBoard: {},
@@ -256,6 +262,15 @@
     document.querySelectorAll('.timer-option[data-time]').forEach(opt => {
       opt.classList.toggle('selected', parseInt(opt.dataset.time) === setupState.timer);
     });
+    // Bonus rounds
+    document.querySelectorAll('.timer-option[data-bonus]').forEach(opt => {
+      opt.classList.toggle('selected', parseInt(opt.dataset.bonus) === setupState.bonusRounds);
+    });
+  }
+
+  // Apply the chosen number of bonus rounds to the freshly-started game.
+  function applyBonusRounds() {
+    if (setupState.bonusRounds != null) game.bonusLifelines = setupState.bonusRounds;
   }
 
   function selectMode(mode) {
@@ -455,6 +470,14 @@
     });
   }
 
+  function selectBonusRounds(n) {
+    setupState.bonusRounds = n;
+    sound.playClick();
+    document.querySelectorAll('.timer-option[data-bonus]').forEach(opt => {
+      opt.classList.toggle('selected', parseInt(opt.dataset.bonus) === n);
+    });
+  }
+
   function proceedFromSetup() {
     if (!setupState.presetBoard) {
       setupState.gameName = document.getElementById('setup-game-name').value.trim() || 'My Jeopardy Game';
@@ -498,6 +521,7 @@
     if (setupState.presetBoard) {
       sound.playBoardReveal();
       game.initCustomGame(setupState.presetBoard, setupState.players, setupState.timer, setupState.gameName);
+      applyBonusRounds();
       pendingSharedGame = null;
       document.getElementById('setup-screen').classList.remove('preset-mode');
       startBoardWithReveal();
@@ -639,7 +663,7 @@
       setupState.gameName,
       setupState.customCategories
     );
-
+    applyBonusRounds();
     startBoardWithReveal();
   }
 
@@ -835,7 +859,7 @@
       setupState.timer,
       setupState.gameName
     );
-
+    applyBonusRounds();
     startBoardWithReveal();
   }
 
@@ -888,6 +912,42 @@
     renderScoreboard();
     updateBonusButton();
     document.querySelector('.board-header .game-title').textContent = game.gameName;
+  }
+
+  // ---- Adjust modal: fix scores / switch whose turn it is, any time ----
+  function openAdjust() {
+    const rows = game.players.map((p, i) => `
+      <div class="adjust-row">
+        <label class="adjust-turn" title="Set as current turn">
+          <input type="radio" name="adjust-turn" value="${i}" ${i === game.currentPlayerIndex ? 'checked' : ''}>
+        </label>
+        <span class="adjust-dot" style="background:${p.color}"></span>
+        <span class="adjust-name" style="color:${p.color}">${escapeHtml(p.name)}</span>
+        <input type="number" class="input-field adjust-score" data-i="${i}" value="${p.score}" step="100">
+      </div>`).join('');
+    document.getElementById('adjust-rows').innerHTML =
+      `<p class="adjust-help">&#128081; = whose turn &middot; edit the score boxes to fix the scoreline</p>` + rows;
+    document.getElementById('adjust-overlay').classList.add('active');
+    sound.playClick();
+  }
+
+  function closeAdjust() {
+    document.getElementById('adjust-overlay').classList.remove('active');
+  }
+
+  function saveAdjust() {
+    document.querySelectorAll('#adjust-rows .adjust-score').forEach(inp => {
+      const i = parseInt(inp.dataset.i, 10);
+      let v = parseInt(inp.value, 10);
+      if (isNaN(v)) v = 0;
+      if (game.players[i]) game.players[i].score = v;
+    });
+    const turn = document.querySelector('#adjust-rows input[name="adjust-turn"]:checked');
+    if (turn) game.currentPlayerIndex = parseInt(turn.value, 10);
+    closeAdjust();
+    renderScoreboard();
+    sound.playCorrect();
+    showToast('Game adjusted', 'success');
   }
 
   function renderBoard() {
@@ -1131,14 +1191,10 @@
     sound.playClick();
     document.querySelectorAll('.player-select-btn').forEach(btn => {
       const pIdx = parseInt(btn.dataset.player);
+      if (isNaN(pIdx)) return;
       btn.classList.toggle('selected', pIdx === index);
       btn.style.borderColor = pIdx === index ? game.players[pIdx].color : '';
     });
-    // Before anyone has attempted, the judged player follows this selection.
-    if (attemptedPlayers.size === 0) {
-      judgingPlayer = index;
-      renderJudgeControls(false);
-    }
   }
 
   function startQuestionTimer() {
@@ -1179,17 +1235,14 @@
     );
   }
 
-  // ---- Judging & Steal (the answer stays HIDDEN until the question resolves,
-  // so a stealing team can't just read it off the screen) ----
-  let attemptedPlayers = new Set();   // players who already (wrongly) tried this question
-  let judgingPlayer = null;           // who is being judged right now (answerer or stealer)
+  // ---- Resolving a question (simple & clear) ----
+  // The answer stays HIDDEN until resolved. The host just taps which team got
+  // it right (any team — that's the "steal"), or "No one got it".
   let answerShown = false;
 
   function initJudging() {
-    attemptedPlayers = new Set();
     answerShown = false;
-    judgingPlayer = selectedAnsweringPlayer !== null ? selectedAnsweringPlayer : game.currentPlayerIndex;
-    renderJudgeControls(false);
+    renderResolvePanel(false);
   }
 
   function showAnswer() {
@@ -1200,111 +1253,82 @@
     if (box) box.classList.remove('hidden-answer');
   }
 
-  // Timer ran out: don't reveal the answer; hand the question to the other teams.
+  // Timer ran out — don't reveal the answer; keep the resolve panel up (it's
+  // already shown), just flag that time is up so the other teams can answer.
   function handleTimeUp() {
     game.stopTimer();
-    const question = game.currentQuestion;
-    if (!question) return;
-    if (judgingPlayer !== null) attemptedPlayers.add(judgingPlayer);
-    const remaining = game.players.map((_, i) => i).filter(i => !attemptedPlayers.has(i));
-    if (remaining.length > 0) {
-      enterStealMode(remaining, true);
-    } else {
-      showAnswer();
-      setTimeout(finishQuestion, 1500);
-    }
+    renderResolvePanel(true);
   }
 
-  function renderJudgeControls(isSteal) {
-    const question = game.currentQuestion;
+  function renderResolvePanel(timedOut) {
     const controls = document.getElementById('judge-controls');
-    if (!controls || !question || judgingPlayer === null) return;
-    const p = game.players[judgingPlayer];
-
-    controls.innerHTML = `
-      <p class="judge-target">
-        ${isSteal ? '&#128176; Steal attempt &mdash; ' : 'Answering: '}
-        <strong style="color: ${p.color}">${escapeHtml(p.name)}</strong>
-      </p>
-      <div class="judge-buttons">
-        <button class="btn btn-success" onclick="window.app.judgeAnswer(true)">&#10003; Correct (+$${question.points})</button>
-        <button class="btn btn-danger" onclick="window.app.judgeAnswer(false)">&#10007; Wrong (no points)</button>
-        <button class="btn btn-secondary" onclick="window.app.showAnswer()">&#128065; Show Answer</button>
-        ${attemptedPlayers.size === 0
-          ? '<button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip</button>'
-          : ''}
-      </div>
-    `;
-  }
-
-  function judgeAnswer(isCorrect) {
     const question = game.currentQuestion;
-    if (!question || judgingPlayer === null) return;
-    game.stopTimer();
-    const modal = document.getElementById('question-modal');
-
-    if (isCorrect) {
-      game.adjustScore(judgingPlayer, question.points);
-      showAnswer();
-      renderScoreboard();
-      sound.playCorrect();
-      modal.classList.remove('flash-wrong');
-      modal.classList.add('flash-correct');
-      const rect = modal.getBoundingClientRect();
-      particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
-      particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
-      setTimeout(finishQuestion, 1100);
-      return;
-    }
-
-    // Wrong answer: no penalty (just no points). Offer it to anyone who hasn't tried.
-    attemptedPlayers.add(judgingPlayer);
-    sound.playWrong();
-    modal.classList.add('flash-wrong');
-    setTimeout(() => modal.classList.remove('flash-wrong'), 500);
-    renderScoreboard();
-
-    const remaining = game.players.map((_, i) => i).filter(i => !attemptedPlayers.has(i));
-    if (remaining.length > 0) {
-      enterStealMode(remaining, false);
-    } else {
-      // Everyone has missed it — now it's fair to reveal the answer.
-      showAnswer();
-      setTimeout(finishQuestion, 1200);
-    }
-  }
-
-  function enterStealMode(remaining, timedOut) {
-    const controls = document.getElementById('judge-controls');
-    if (!controls) return;
-    sound.playReveal();
+    if (!controls || !question) return;
     controls.innerHTML = `
       ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up!</p>' : ''}
-      <p class="steal-prompt">&#128176; Steal! Anyone else who answers correctly takes the points. No penalty for a wrong guess. (Answer stays hidden so it's fair.)</p>
-      <div class="steal-players">
-        ${remaining.map(i => `
-          <button class="player-select-btn steal-btn" style="border-color: ${game.players[i].color}"
-                  onclick="window.app.selectStealer(${i})">
-            ${escapeHtml(game.players[i].name)}
-          </button>
-        `).join('')}
+      <p class="judge-target">Who answered correctly? <span class="judge-pts">(+$${question.points})</span></p>
+      <div class="resolve-players">
+        ${game.players.map((p, i) => `
+          <button class="resolve-btn ${i === game.currentPlayerIndex ? 'is-turn' : ''}"
+                  style="border-color: ${p.color}; color: ${p.color}"
+                  onclick="window.app.awardTo(${i})">
+            ${escapeHtml(p.name)}${i === game.currentPlayerIndex ? ' &middot; turn' : ''}
+          </button>`).join('')}
       </div>
       <div class="judge-buttons" style="margin-top: 14px;">
-        <button class="btn btn-secondary" onclick="window.app.stealPass()">No steal &mdash; reveal &amp; move on</button>
+        <button class="btn btn-danger" onclick="window.app.noOneGotIt()">&#10007; No one got it</button>
+        <button class="btn btn-secondary" onclick="window.app.showAnswer()">&#128065; Show Answer</button>
+        <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip</button>
       </div>
     `;
   }
 
-  function selectStealer(index) {
-    judgingPlayer = index;
-    sound.playClick();
-    renderJudgeControls(true);
+  function awardTo(index) {
+    const question = game.currentQuestion;
+    if (!question) return;
+    game.stopTimer();
+    game.adjustScore(index, question.points);
+    showAnswer();
+    renderScoreboard();
+    const modal = document.getElementById('question-modal');
+    sound.playCorrect();
+    modal.classList.remove('flash-wrong');
+    modal.classList.add('flash-correct');
+    const rect = modal.getBoundingClientRect();
+    particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
+    particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
+    setTimeout(finishQuestion, 1100);
   }
 
-  function stealPass() {
-    sound.playClick();
+  function noOneGotIt() {
+    game.stopTimer();
     showAnswer();
-    setTimeout(finishQuestion, 1000);
+    sound.playWrong();
+    const controls = document.getElementById('judge-controls');
+    if (!controls) return;
+    // If bonus rounds remain, offer to settle it with one.
+    if (game.bonusLifelines > 0 && game.players.length >= 2) {
+      controls.innerHTML = `
+        <p class="judge-target">Nobody got it!</p>
+        <div class="judge-buttons">
+          <button class="btn btn-bonus" onclick="window.app.bonusFromQuestion()">&#9889; Settle with a Bonus Round (${game.bonusLifelines} left)</button>
+          <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Just move on</button>
+        </div>
+      `;
+    } else {
+      setTimeout(finishQuestion, 1400);
+    }
+  }
+
+  // Launch a bonus round straight from a "nobody got it" question.
+  function bonusFromQuestion() {
+    const question = game.currentQuestion;
+    if (question) game.markAnswered(question.cellKey);
+    closeQuestionModal();
+    game.nextPlayer();
+    renderScoreboard();
+    renderBoard();
+    openBonus();
   }
 
   function skipQuestion() {
@@ -1341,8 +1365,7 @@
     const overlay = document.getElementById('question-overlay');
     overlay.classList.remove('active');
     selectedAnsweringPlayer = null;
-    attemptedPlayers = new Set();
-    judgingPlayer = null;
+    answerShown = false;
   }
 
   // ---- Interactive Challenge ----
@@ -1457,14 +1480,13 @@
         <p style="font-size: 1.3rem; color: ${isSuccess ? 'var(--correct-green)' : 'var(--wrong-red)'}; margin-bottom: 10px;">
           ${isSuccess ? 'Challenge Complete!' : 'Time\'s Up!'}
         </p>
-        <p style="color: rgba(255,255,255,0.6); margin-bottom: 20px;">
-          You got <strong style="color: var(--gold)">${score}</strong> out of ${target}
+        <p style="color: rgba(255,255,255,0.6); margin-bottom: 8px;">
+          They reached <strong style="color: var(--gold)">${score}</strong> out of ${target}
         </p>
+        <p style="color: rgba(255,255,255,0.45); margin-bottom: 18px; font-size: 0.9rem;">Did they complete it? (You decide &mdash; in case of a last-second answer.)</p>
         <div class="judge-buttons">
-          ${isSuccess ?
-            `<button class="btn btn-success" onclick="window.app.awardChallenge(true)">&#10003; Award $${question.points}</button>` :
-            `<button class="btn btn-secondary" onclick="window.app.awardChallenge(false)">&#10007; No points</button>`
-          }
+          <button class="btn btn-success" onclick="window.app.awardChallenge(true)">&#10003; Completed &mdash; Award $${question.points}</button>
+          <button class="btn btn-secondary" onclick="window.app.awardChallenge(false)">&#10007; Not completed</button>
         </div>
       </div>
     `;
@@ -1712,10 +1734,11 @@
   }
 
   function buildBonusPool() {
+    // Rapid-fire should be STRAIGHTFORWARD: use only the easy tiers ($200/$400).
     const pool = [];
     Object.keys(QUESTION_BANK).forEach(cat => {
       (QUESTION_BANK[cat] || []).forEach(q => {
-        if (q.type === 'text' && q.q && q.a) pool.push({ q: q.q, a: q.a });
+        if (q.type === 'text' && q.q && q.a && q.points <= 400) pool.push({ q: q.q, a: q.a });
       });
     });
     for (let i = pool.length - 1; i > 0; i--) {
@@ -1741,26 +1764,70 @@
     }
     const pick = pickTwoPlayers();
     bonusState = {
-      mode: 'trivia',            // 'trivia' (rapid-fire) | 'name' (bidding challenge)
+      mode: 'trivia',            // 'trivia' (rapid-fire) | 'name' (bidding) | 'feud'
       a: pick.a, b: pick.b,
       duration: 45,
       scores: { a: 0, b: 0 },    // used by trivia mode
       current: 'a', queue: [], qIndex: 0,
-      prompt: NAME_PROMPTS[0],   // used by name mode
-      bid: 10, attempter: 'a', count: 0
+      prompt: NAME_PROMPTS[Math.floor(Math.random() * NAME_PROMPTS.length)],
+      bid: 10, attempter: 'a', count: 0,
+      feudIndex: (typeof FAMILY_FEUD !== 'undefined') ? Math.floor(Math.random() * FAMILY_FEUD.length) : 0,
+      feudRevealed: {},
+      useReps: false, repA: null, repB: null
     };
+    rollBonusReps();
     sound.playClick();
     renderBonusSetup();
     document.getElementById('bonus-overlay').classList.add('active');
   }
 
+  // For team games, pick a random member from each team to represent it.
+  function rollBonusReps() {
+    const ma = game.players[bonusState.a] && game.players[bonusState.a].members;
+    const mb = game.players[bonusState.b] && game.players[bonusState.b].members;
+    bonusState.repA = (ma && ma.length) ? ma[Math.floor(Math.random() * ma.length)] : null;
+    bonusState.repB = (mb && mb.length) ? mb[Math.floor(Math.random() * mb.length)] : null;
+  }
+
+  // Label for a contestant slot — shows the random member (if using players) + team.
+  function contestantLabel(slot) {
+    const idx = slot === 'a' ? bonusState.a : bonusState.b;
+    const team = game.players[idx];
+    const rep = slot === 'a' ? bonusState.repA : bonusState.repB;
+    if (bonusState.useReps && rep) return escapeHtml(rep) + ' <small>(' + escapeHtml(team.name) + ')</small>';
+    return escapeHtml(team.name);
+  }
+
+  function setBonusUseReps(on) {
+    bonusState.useReps = on;
+    if (on) rollBonusReps();
+    sound.playClick();
+    renderBonusSetup();
+  }
+
+  function setBonusFeud(index) { bonusState.feudIndex = parseInt(index, 10); }
+
+  // Randomize everything: contestants, member reps, and the topic/question.
+  function randomizeBonus() {
+    const pick = pickTwoPlayers();
+    bonusState.a = pick.a; bonusState.b = pick.b;
+    rollBonusReps();
+    bonusState.prompt = NAME_PROMPTS[Math.floor(Math.random() * NAME_PROMPTS.length)];
+    if (typeof FAMILY_FEUD !== 'undefined') bonusState.feudIndex = Math.floor(Math.random() * FAMILY_FEUD.length);
+    sound.playBoardReveal();
+    renderBonusSetup();
+  }
+
   // Prompts for the "name as many as you can" bidding challenge (host counts).
-  const NAME_PROMPTS = [
+  let NAME_PROMPTS = [
     'Countries in Europe', 'Countries in Africa', 'Countries in Asia',
     'World capital cities', 'U.S. states', 'NBA teams', 'Football (soccer) clubs',
     'Elements on the periodic table', 'Disney animated movies', 'Ocean animals',
     'Car brands', 'Pizza toppings', 'Marvel superheroes', 'Types of fruit'
   ];
+  if (typeof NAME_PROMPTS_EXTRA !== 'undefined') {
+    NAME_PROMPTS = NAME_PROMPTS.concat(NAME_PROMPTS_EXTRA);
+  }
 
   function setBonusMode(mode) {
     bonusState.mode = mode;
@@ -1789,29 +1856,56 @@
   function renderBonusSetup() {
     const m = document.getElementById('bonus-modal');
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
-    const isName = bonusState.mode === 'name';
+    const mode = bonusState.mode;
+    const isName = mode === 'name';
+    const isFeud = mode === 'feud';
+    const teamsHaveMembers = game.players.some(p => p.members && p.members.length);
 
     const modeToggle = `
       <div class="bonus-mode-toggle">
-        <button class="team-mode-btn ${!isName ? 'selected' : ''}" onclick="window.app.setBonusMode('trivia')">&#9889; Rapid-Fire Trivia</button>
+        <button class="team-mode-btn ${mode === 'trivia' ? 'selected' : ''}" onclick="window.app.setBonusMode('trivia')">&#9889; Rapid-Fire</button>
         <button class="team-mode-btn ${isName ? 'selected' : ''}" onclick="window.app.setBonusMode('name')">&#128221; Name as Many</button>
+        <button class="team-mode-btn ${isFeud ? 'selected' : ''}" onclick="window.app.setBonusMode('feud')">&#128101; Family Feud</button>
       </div>`;
 
+    const facensToggle = teamsHaveMembers ? `
+      <div class="bonus-faceoff">
+        <button class="team-mode-btn ${!bonusState.useReps ? 'selected' : ''}" onclick="window.app.setBonusUseReps(false)">Whole teams</button>
+        <button class="team-mode-btn ${bonusState.useReps ? 'selected' : ''}" onclick="window.app.setBonusUseReps(true)">&#127922; Random players</button>
+      </div>` : '';
+
+    const repsLine = (bonusState.useReps && teamsHaveMembers)
+      ? `<p class="bonus-reps">${contestantLabel('a')} &nbsp;vs&nbsp; ${contestantLabel('b')}</p>` : '';
+
     const vs = `
+      ${facensToggle}
       <div class="bonus-vs">
         <div class="bonus-slot" style="border-color:${A.color}">
-          <label>Contestant 1</label>
+          <label>Side 1</label>
           <select class="input-field" onchange="window.app.setBonusPlayer('a', this.value)">${playerOption('a')}</select>
         </div>
         <div class="bonus-vs-label">VS</div>
         <div class="bonus-slot" style="border-color:${B.color}">
-          <label>Contestant 2</label>
+          <label>Side 2</label>
           <select class="input-field" onchange="window.app.setBonusPlayer('b', this.value)">${playerOption('b')}</select>
         </div>
-      </div>`;
+      </div>
+      ${repsLine}`;
 
     let body, desc, startBtn;
-    if (isName) {
+    if (isFeud) {
+      const feud = (typeof FAMILY_FEUD !== 'undefined') ? FAMILY_FEUD : [];
+      desc = `Survey says! Both sides guess the top answers. Reveal them one by one, then award <strong>+$250</strong> to the side that found the most.`;
+      body = `
+        ${vs}
+        <div class="bonus-name-setup">
+          <label class="bonus-field-label">Survey question</label>
+          <select class="input-field" onchange="window.app.setBonusFeud(this.value)">
+            ${feud.map((f, i) => `<option value="${i}" ${i === bonusState.feudIndex ? 'selected' : ''}>${escapeHtml(f.prompt.replace('We asked 100 people: ', ''))}</option>`).join('')}
+          </select>
+        </div>`;
+      startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusFeud()">Start Feud!</button>`;
+    } else if (isName) {
       desc = `Pick a topic and bid: "I can name X." The bidder must name that many before time runs out. Make it &rarr; <strong>+$250</strong>; fall short &rarr; the opponent gets <strong>+$250</strong>.`;
       const attA = game.players[bonusState.a], attB = game.players[bonusState.b];
       body = `
@@ -1829,8 +1923,8 @@
           </div>
           <label class="bonus-field-label">Who took the bid (has to name them)?</label>
           <div class="bonus-attempter">
-            <button class="team-mode-btn ${bonusState.attempter === 'a' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('a')" style="border-color:${attA.color}">${escapeHtml(attA.name)}</button>
-            <button class="team-mode-btn ${bonusState.attempter === 'b' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('b')" style="border-color:${attB.color}">${escapeHtml(attB.name)}</button>
+            <button class="team-mode-btn ${bonusState.attempter === 'a' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('a')" style="border-color:${attA.color}">${contestantLabel('a')}</button>
+            <button class="team-mode-btn ${bonusState.attempter === 'b' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('b')" style="border-color:${attB.color}">${contestantLabel('b')}</button>
           </div>
         </div>
         <div class="bonus-duration">
@@ -1860,7 +1954,7 @@
       <p class="bonus-desc">${desc} (Lifeline &mdash; ${game.bonusLifelines} left.)</p>
       ${body}
       <div class="bonus-actions">
-        <button class="btn btn-secondary" onclick="window.app.rerollBonus()">&#127922; Re-roll players</button>
+        <button class="btn btn-secondary" onclick="window.app.randomizeBonus()">&#127922; Randomize</button>
         ${startBtn}
       </div>
       <button class="btn btn-secondary btn-small bonus-cancel" onclick="window.app.closeBonus()">Cancel</button>
@@ -1871,6 +1965,7 @@
     const idx = parseInt(val);
     bonusState[slot] = idx;
     const other = slot === 'a' ? 'b' : 'a';
+    if (bonusState.useReps) rollBonusReps();
     if (bonusState[other] === idx) {
       bonusState[other] = (idx + 1) % game.players.length;
     }
@@ -2096,6 +2191,65 @@
     sound.playGameOver();
   }
 
+  // ---- Bonus: Family Feud ----
+  function startBonusFeud() {
+    if (bonusState.a === bonusState.b) { showToast('Pick two different sides', 'error'); return; }
+    if (typeof FAMILY_FEUD === 'undefined' || !FAMILY_FEUD[bonusState.feudIndex]) return;
+    bonusState.feudRevealed = {};
+    sound.playBoardReveal();
+    renderBonusFeudPlay();
+  }
+
+  function renderBonusFeudPlay() {
+    const m = document.getElementById('bonus-modal');
+    const f = FAMILY_FEUD[bonusState.feudIndex];
+    const slots = f.answers.map((ans, i) => `
+      <button class="feud-slot ${bonusState.feudRevealed[i] ? 'revealed' : ''}" onclick="window.app.revealFeudAnswer(${i})">
+        <span class="feud-rank">${i + 1}</span>
+        <span class="feud-text">${bonusState.feudRevealed[i] ? escapeHtml(ans) : '&middot; &middot; &middot;'}</span>
+      </button>`).join('');
+    const A = game.players[bonusState.a], B = game.players[bonusState.b];
+    m.innerHTML = `
+      <span class="bonus-icon">&#128101;</span>
+      <h2 class="bonus-title">Family Feud</h2>
+      <p class="bonus-feud-q">${escapeHtml(f.prompt)}</p>
+      <p class="bonus-desc">Tap an answer to reveal it as a side calls it out.</p>
+      <div class="feud-board">${slots}</div>
+      <p class="bonus-field-label">Who found the most? Award +$250:</p>
+      <div class="resolve-players">
+        <button class="resolve-btn" style="border-color:${A.color};color:${A.color}" onclick="window.app.awardFeud('a')">${contestantLabel('a')}</button>
+        <button class="resolve-btn" style="border-color:${B.color};color:${B.color}" onclick="window.app.awardFeud('b')">${contestantLabel('b')}</button>
+      </div>
+      <div class="judge-buttons" style="margin-top:12px;">
+        <button class="btn btn-secondary" onclick="window.app.awardFeud('tie')">Tie / no winner</button>
+      </div>`;
+  }
+
+  function revealFeudAnswer(i) {
+    bonusState.feudRevealed[i] = true;
+    sound.playChallengeCorrect();
+    renderBonusFeudPlay();
+  }
+
+  function awardFeud(winner) {
+    const win = winner === 'tie' ? null : game.players[winner === 'a' ? bonusState.a : bonusState.b];
+    if (win) game.adjustScore(winner === 'a' ? bonusState.a : bonusState.b, 250);
+    if (game.bonusLifelines > 0) game.bonusLifelines--;
+    updateBonusButton();
+    renderScoreboard();
+    const m = document.getElementById('bonus-modal');
+    m.innerHTML = `
+      <span class="bonus-icon">&#127942;</span>
+      <h2 class="bonus-title">${winner === 'tie' ? "It's a tie!" : 'Bonus Won!'}</h2>
+      ${win ? `<p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$250!</p>` : '<p class="bonus-result-tie">No points awarded.</p>'}
+      <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>`;
+    if (win) {
+      const r = m.getBoundingClientRect();
+      particles.createConfetti(r.left + r.width / 2, r.top + r.height / 2, 50);
+      sound.playGameOver();
+    }
+  }
+
   function closeBonus() {
     game.stopTimer();
     const overlay = document.getElementById('bonus-overlay');
@@ -2231,6 +2385,7 @@
     showSavedGames,
     showHowToPlay,
     selectMode,
+    selectBonusRounds,
     selectFormat,
     selectTeamCount,
     selectTeamMode,
@@ -2255,6 +2410,9 @@
     copyShareLink,
     closeShare,
     beginAfterReveal,
+    openAdjust,
+    closeAdjust,
+    saveAdjust,
     openBonus,
     setBonusMode,
     setBonusPlayer,
@@ -2262,8 +2420,14 @@
     setBonusPrompt,
     setBonusBid,
     setBonusAttempter,
+    setBonusUseReps,
+    setBonusFeud,
+    randomizeBonus,
     rerollBonus,
     startBonusDuel,
+    startBonusFeud,
+    revealFeudAnswer,
+    awardFeud,
     beginBonusTurn,
     bonusPeek,
     bonusCorrect,
@@ -2279,9 +2443,9 @@
     selectCell,
     selectAnsweringPlayer,
     showAnswer,
-    judgeAnswer,
-    selectStealer,
-    stealPass,
+    awardTo,
+    noOneGotIt,
+    bonusFromQuestion,
     skipQuestion,
     skipFromReveal,
     startChallenge,

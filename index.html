@@ -174,6 +174,19 @@
         </div>
       </div>
 
+      <!-- Bonus rounds -->
+      <div class="setup-section">
+        <h3>&#9889; Bonus Rounds (lifelines)</h3>
+        <div class="timer-selector">
+          <button class="timer-option" data-bonus="0" onclick="app.selectBonusRounds(0)">0</button>
+          <button class="timer-option" data-bonus="1" onclick="app.selectBonusRounds(1)">1</button>
+          <button class="timer-option" data-bonus="2" onclick="app.selectBonusRounds(2)">2</button>
+          <button class="timer-option selected" data-bonus="3" onclick="app.selectBonusRounds(3)">3</button>
+          <button class="timer-option" data-bonus="4" onclick="app.selectBonusRounds(4)">4</button>
+          <button class="timer-option" data-bonus="5" onclick="app.selectBonusRounds(5)">5</button>
+        </div>
+      </div>
+
       <div class="setup-actions">
         <button class="btn btn-secondary" onclick="app.goBack('menu')">Back</button>
         <button class="btn btn-primary btn-large" onclick="app.proceedFromSetup()">Continue</button>
@@ -240,6 +253,9 @@
         <button class="btn btn-bonus btn-small" id="bonus-btn" onclick="app.openBonus()">
           &#9889; Bonus (2)
         </button>
+        <button class="btn btn-secondary btn-small" onclick="app.openAdjust()">
+          &#9881; Adjust
+        </button>
         <button class="sound-toggle" id="sound-toggle" onclick="app.toggleSound()">&#128264;</button>
         <button class="btn btn-danger btn-small" onclick="app.endGameEarly()">
           End Game
@@ -271,6 +287,19 @@
       <div class="share-actions" style="gap:10px;">
         <button class="btn btn-secondary" onclick="app.closeCustomCategory()">Cancel</button>
         <button class="btn btn-primary" onclick="app.saveCustomCategory()">Add Category</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADJUST MODAL (scores + whose turn) ===== -->
+  <div class="modal-overlay" id="adjust-overlay">
+    <div class="adjust-modal glass-card">
+      <h3 class="share-title">&#9881; Adjust Game</h3>
+      <p class="share-desc">Fix the scoreline or switch whose turn it is &mdash; any time.</p>
+      <div id="adjust-rows"></div>
+      <div class="share-actions" style="gap:10px;">
+        <button class="btn btn-secondary" onclick="app.closeAdjust()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveAdjust()">Apply</button>
       </div>
     </div>
   </div>
@@ -422,6 +451,7 @@
 
   <!-- Scripts -->
   <script src="jeopardy-data.js"></script>
+  <script src="jeopardy-extra.js"></script>
   <script src="questions.js"></script>
   <script src="game.js"></script>
   <script src="app.js"></script>
