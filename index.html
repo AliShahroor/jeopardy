@@ -225,7 +225,7 @@
   <div id="custom-screen" class="screen">
     <div class="custom-container">
       <h2 class="section-title">Custom Game Builder</h2>
-      <p style="text-align: center; color: rgba(255,255,255,0.4); margin-bottom: 20px;">
+      <p style="text-align: center; color: rgba(255,255,255,0.6); margin-bottom: 20px;">
         Create 6 categories with 5 questions each ($200 - $1000)
       </p>
 
@@ -251,7 +251,7 @@
           &#128279; Share
         </button>
         <button class="btn btn-bonus btn-small" id="bonus-btn" onclick="app.openBonus()">
-          &#9889; Bonus (2)
+          &#9889; Bonus
         </button>
         <button class="btn btn-secondary btn-small" onclick="app.openAdjust()">
           &#9881; Adjust
@@ -265,12 +265,14 @@
 
     <div class="scoreboard" id="scoreboard"></div>
 
-    <div class="jeopardy-board" id="jeopardy-board"></div>
+    <div class="board-scroll">
+      <div class="jeopardy-board" id="jeopardy-board"></div>
+    </div>
   </div>
 
   <!-- ===== QUESTION MODAL ===== -->
   <div class="modal-overlay" id="question-overlay">
-    <div class="question-modal" id="question-modal">
+    <div class="question-modal" id="question-modal" role="dialog" aria-modal="true" aria-label="Question">
       <div class="modal-category" id="modal-category"></div>
       <div class="modal-points" id="modal-points"></div>
       <div id="modal-content"></div>
@@ -279,7 +281,7 @@
 
   <!-- ===== ADD-YOUR-OWN CATEGORY MODAL ===== -->
   <div class="modal-overlay" id="custom-cat-overlay">
-    <div class="custom-cat-modal glass-card">
+    <div class="custom-cat-modal glass-card" role="dialog" aria-modal="true" aria-label="Add your own category">
       <h3 class="share-title">&#10133; Your Own Category</h3>
       <p class="share-desc">Write a category and a question for each value. Mix it right in with the built-in ones. (Blanks are skipped.)</p>
       <input type="text" id="custom-cat-name" class="input-field" placeholder="Category name (e.g. Our Friend Group)" maxlength="28">
@@ -293,7 +295,7 @@
 
   <!-- ===== ADJUST MODAL (scores + whose turn) ===== -->
   <div class="modal-overlay" id="adjust-overlay">
-    <div class="adjust-modal glass-card">
+    <div class="adjust-modal glass-card" role="dialog" aria-modal="true" aria-label="Adjust game">
       <h3 class="share-title">&#9881; Adjust Game</h3>
       <p class="share-desc">Fix the scoreline or switch whose turn it is &mdash; any time.</p>
       <div id="adjust-rows"></div>
@@ -306,17 +308,17 @@
 
   <!-- ===== TEAM REVEAL MODAL ===== -->
   <div class="modal-overlay" id="team-reveal-overlay">
-    <div class="team-reveal-modal glass-card" id="team-reveal-modal"></div>
+    <div class="team-reveal-modal glass-card" id="team-reveal-modal" role="dialog" aria-modal="true" aria-label="Team reveal"></div>
   </div>
 
   <!-- ===== BONUS ROUND MODAL ===== -->
   <div class="modal-overlay" id="bonus-overlay">
-    <div class="bonus-modal glass-card" id="bonus-modal"></div>
+    <div class="bonus-modal glass-card" id="bonus-modal" role="dialog" aria-modal="true" aria-label="Bonus round"></div>
   </div>
 
   <!-- ===== SHARE MODAL ===== -->
   <div class="modal-overlay" id="share-overlay">
-    <div class="share-modal glass-card">
+    <div class="share-modal glass-card" role="dialog" aria-modal="true" aria-label="Share this game">
       <span class="share-icon">&#128279;</span>
       <h3 class="share-title">Share this game</h3>
       <p class="share-desc">Send this link to your friends. Anyone who opens it gets your exact game board &mdash; categories, questions, and timer &mdash; ready to play. No account needed.</p>

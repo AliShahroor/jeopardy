@@ -27,22 +27,23 @@
   };
 
   // ---- Category Icons ----
+  // Icons for the active board categories (see ACTIVE_CATEGORIES in questions.js).
   const CATEGORY_ICONS = {
-    "Geography": "&#127758;",
-    "History": "&#127984;",
-    "Science": "&#128300;",
-    "Literature": "&#128218;",
-    "Movies": "&#127916;",
-    "Music": "&#127925;",
+    "General Knowledge": "&#129504;",
     "Sports": "&#9917;",
-    "Technology": "&#128187;",
+    "History": "&#127984;",
+    "Geography": "&#127758;",
+    "Movies & TV": "&#127916;",
+    "Music & Songs": "&#127925;",
+    "Science": "&#128300;",
+    "Animals & Nature": "&#128058;",
     "Food & Drink": "&#127869;",
-    "Art": "&#127912;",
-    "Mathematics": "&#128290;",
-    "Nature": "&#127793;",
-    "World Languages": "&#128172;",
-    "Pop Culture": "&#11088;",
+    "Famous People": "&#128100;",
+    "Technology & Inventions": "&#128161;",
     "Space & Astronomy": "&#128640;",
+    "Art & Literature": "&#127912;",
+    "Pop Culture": "&#11088;",
+    "Famous Landmarks": "&#127963;",
     "Video Games": "&#127918;",
     "Anime & Manga": "&#127884;",
     "Superheroes": "&#129464;",
@@ -51,17 +52,7 @@
     "Internet Culture": "&#127760;",
     "Mythology": "&#9889;",
     "World Religions": "&#128720;",
-    "Chemistry": "&#129514;",
-    "Biology": "&#129516;",
     "Flags of the World": "&#128681;",
-    "General Knowledge": "&#129504;",
-    "Movies & TV": "&#127916;",
-    "Music & Songs": "&#127925;",
-    "Animals & Nature": "&#128058;",
-    "Famous People": "&#128100;",
-    "Technology & Inventions": "&#128161;",
-    "Art & Literature": "&#127912;",
-    "Famous Landmarks": "&#127963;",
     "Logos & Brands": "&#127991;",
     "Cartoons & Animation": "&#128371;",
     "TV Shows": "&#128250;"
@@ -583,7 +574,7 @@
     const note = document.getElementById('topic-more-note');
     if (note) {
       if (filtered.length > shown.length) {
-        note.textContent = `Showing ${shown.length} of ${filtered.length} matches â type to narrow it down.`;
+        note.textContent = `Showing ${shown.length} of ${filtered.length} matches — type to narrow it down.`;
       } else if (filtered.length === 0) {
         note.textContent = 'No categories match your search.';
       } else {
@@ -646,7 +637,7 @@
     setupState.selectedTopics = shuffled.slice(0, 6);
     sound.playBoardReveal();
     renderTopicGrid();
-    showToast('Picked 6 random categories â hit Start!', 'success');
+    showToast('Picked 6 random categories — hit Start!', 'success');
   }
 
   function startTopicGame() {
@@ -960,23 +951,26 @@
 
     // Category headers
     game.categories.forEach(cat => {
-      html += `<div class="board-category-header">${escapeHtml(cat)}</div>`;
+      html += `<div class="board-category-header" role="columnheader">${escapeHtml(cat)}</div>`;
     });
 
-    // Question cells (5 rows)
+    // Question cells (5 rows). Rendered as <button> so they are natively
+    // keyboard-focusable and activate on Enter/Space.
     for (let row = 0; row < 5; row++) {
       for (let col = 0; col < numCats; col++) {
         const isAnswered = game.isCellAnswered(col, row);
         // Show this cell's actual point value (custom categories can set their own).
         const cellQ = game.board[game.categories[col]] && game.board[game.categories[col]][row];
         const pointValue = (cellQ && cellQ.points != null) ? cellQ.points : game.pointValues[row];
+        const catName = game.categories[col];
 
         html += `
-          <div class="board-cell ${isAnswered ? 'answered' : ''}"
-               data-col="${col}" data-row="${row}"
+          <button type="button" class="board-cell ${isAnswered ? 'answered' : ''}"
+               data-col="${col}" data-row="${row}" ${isAnswered ? 'disabled' : ''}
+               aria-label="${escapeHtml(catName)}, $${pointValue}${isAnswered ? ', already played' : ''}"
                onclick="window.app.selectCell(${col}, ${row})">
             <span class="cell-value">$${pointValue}</span>
-          </div>
+          </button>
         `;
       }
     }
@@ -1011,6 +1005,9 @@
     `).join('');
   }
 
+  // Element that opened the current modal, so focus can be restored on close.
+  let lastFocusedTrigger = null;
+
   function selectCell(col, row) {
     if (game.isCellAnswered(col, row)) return;
 
@@ -1022,6 +1019,7 @@
     // Flip animation on the cell
     const cell = document.querySelector(`.board-cell[data-col="${col}"][data-row="${row}"]`);
     if (cell) cell.classList.add('flipping');
+    lastFocusedTrigger = document.activeElement;
 
     setTimeout(() => {
       showQuestionModal(question);
@@ -1049,6 +1047,9 @@
     }
 
     overlay.classList.add('active');
+    // Move keyboard focus into the dialog.
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
   }
 
   function renderTextQuestion(question) {
@@ -1095,7 +1096,7 @@
     } else if (question.imageType === 'emoji_map') {
       const template = IMAGE_TEMPLATES[question.imageData];
       if (template) {
-        imageHtml = `<div class="question-image">${template.emoji}<br><small style="font-size:0.8rem; color: rgba(255,255,255,0.4);">${template.description}</small></div>`;
+        imageHtml = `<div class="question-image">${template.emoji}<br><small style="font-size:0.8rem; color: rgba(255,255,255,0.6);">${template.description}</small></div>`;
       }
     } else if (question.imageType === 'flag') {
       const template = IMAGE_TEMPLATES[question.imageData];
@@ -1205,7 +1206,7 @@
 
     // No-timer mode: leave the bar full, show infinity, never auto-reveal.
     if (!totalTime) {
-      if (timerDisplay) timerDisplay.textContent = 'â';
+      if (timerDisplay) timerDisplay.textContent = '∞';
       if (timerBar) timerBar.style.width = '100%';
       return;
     }
@@ -1235,13 +1236,21 @@
     );
   }
 
-  // ---- Resolving a question (simple & clear) ----
-  // The answer stays HIDDEN until resolved. The host just taps which team got
-  // it right (any team — that's the "steal"), or "No one got it".
+  // ---- Resolving a question (two phases: original answer, then steal) ----
+  // The answer stays HIDDEN until resolved.
+  //  Phase 1: did the player whose turn it is get it right?
+  //           - correct  -> +points
+  //           - wrong     -> NO deduction for them (Jeopardy-style), opens steal
+  //  Phase 2 (steal): any OTHER player may try. A steal is a RISK:
+  //           - correct  -> +points to the stealer
+  //           - wrong    -> -points from the stealer (the documented downside)
   let answerShown = false;
+  // Track score changes for this question so a misclick can be undone.
+  let lastAward = null; // { index, delta }
 
   function initJudging() {
     answerShown = false;
+    lastAward = null;
     renderResolvePanel(false);
   }
 
@@ -1253,51 +1262,158 @@
     if (box) box.classList.remove('hidden-answer');
   }
 
-  // Timer ran out — don't reveal the answer; keep the resolve panel up (it's
-  // already shown), just flag that time is up so the other teams can answer.
+  // Timer ran out — don't reveal the answer; the player on turn missed their
+  // chance, so go straight to the steal phase (other players can answer).
   function handleTimeUp() {
     game.stopTimer();
-    renderResolvePanel(true);
+    renderStealPanel(true);
   }
 
+  // ---- Phase 1: the player whose turn it is ----
   function renderResolvePanel(timedOut) {
     const controls = document.getElementById('judge-controls');
     const question = game.currentQuestion;
     if (!controls || !question) return;
+    const turnPlayer = game.players[game.currentPlayerIndex];
     controls.innerHTML = `
-      ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up!</p>' : ''}
-      <p class="judge-target">Who answered correctly? <span class="judge-pts">(+$${question.points})</span></p>
-      <div class="resolve-players">
-        ${game.players.map((p, i) => `
-          <button class="resolve-btn ${i === game.currentPlayerIndex ? 'is-turn' : ''}"
-                  style="border-color: ${p.color}; color: ${p.color}"
-                  onclick="window.app.awardTo(${i})">
-            ${escapeHtml(p.name)}${i === game.currentPlayerIndex ? ' &middot; turn' : ''}
-          </button>`).join('')}
+      ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up — anyone can steal now!</p>' : ''}
+      <p class="judge-target">Did <strong style="color:${turnPlayer.color}">${escapeHtml(turnPlayer.name)}</strong> answer correctly? <span class="judge-pts">(&plusmn;$${question.points})</span></p>
+      <div class="judge-buttons">
+        <button class="btn btn-success" onclick="window.app.awardTurn(true)">&#10003; Correct (+$${question.points})</button>
+        <button class="btn btn-danger" onclick="window.app.awardTurn(false)">&#10007; Wrong / no answer</button>
       </div>
-      <div class="judge-buttons" style="margin-top: 14px;">
-        <button class="btn btn-danger" onclick="window.app.noOneGotIt()">&#10007; No one got it</button>
+      <div class="judge-buttons" style="margin-top: 12px;">
         <button class="btn btn-secondary" onclick="window.app.showAnswer()">&#128065; Show Answer</button>
         <button class="btn btn-secondary" onclick="window.app.skipFromReveal()">Skip</button>
       </div>
     `;
   }
 
-  function awardTo(index) {
+  // Resolve the player on turn. Correct = award & finish. Wrong = no penalty,
+  // open the steal phase.
+  function awardTurn(isCorrect) {
     const question = game.currentQuestion;
     if (!question) return;
     game.stopTimer();
-    game.adjustScore(index, question.points);
-    showAnswer();
+    if (isCorrect) {
+      applyAward(game.currentPlayerIndex, question.points);
+      celebrateAward();
+      setTimeout(finishQuestion, 1100);
+    } else {
+      sound.playWrong();
+      renderStealPanel(false);
+    }
+  }
+
+  // ---- Phase 2: the steal ----
+  function renderStealPanel(timedOut) {
+    const controls = document.getElementById('judge-controls');
+    const question = game.currentQuestion;
+    if (!controls || !question) return;
+    const stealers = game.players
+      .map((p, i) => ({ p, i }))
+      .filter(o => o.i !== game.currentPlayerIndex);
+    controls.innerHTML = `
+      ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up — open for a steal!</p>' : ''}
+      <p class="judge-target">&#128176; Steal! Tap a player, then mark their attempt. <span class="judge-pts">(correct +$${question.points} &middot; wrong &minus;$${question.points})</span></p>
+      <div class="resolve-players">
+        ${stealers.map(o => `
+          <div class="steal-row" style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:8px; flex-wrap:wrap;">
+            <span class="resolve-btn" style="border-color: ${o.p.color}; color: ${o.p.color}; cursor:default;">${escapeHtml(o.p.name)}</span>
+            <button class="btn btn-success btn-small" onclick="window.app.resolveSteal(${o.i}, true)">&#10003; +$${question.points}</button>
+            <button class="btn btn-danger btn-small" onclick="window.app.resolveSteal(${o.i}, false)">&#10007; &minus;$${question.points}</button>
+          </div>`).join('')}
+      </div>
+      <div class="judge-buttons" style="margin-top: 12px;">
+        <button class="btn btn-danger" onclick="window.app.noOneGotIt()">&#10007; No one got it</button>
+        <button class="btn btn-secondary" onclick="window.app.showAnswer()">&#128065; Show Answer</button>
+      </div>
+    `;
+  }
+
+  // Resolve a steal attempt: correct adds points, wrong DEDUCTS them.
+  function resolveSteal(index, isCorrect) {
+    const question = game.currentQuestion;
+    if (!question) return;
+    game.stopTimer();
+    if (isCorrect) {
+      applyAward(index, question.points);
+      celebrateAward();
+      setTimeout(finishQuestion, 1100);
+    } else {
+      applyAward(index, -question.points);
+      sound.playWrong();
+      const modal = document.getElementById('question-modal');
+      if (modal) { modal.classList.remove('flash-correct'); modal.classList.add('flash-wrong'); }
+      // Wrong steal resolved — keep the panel open so another player can still
+      // try (or the host can close it out via "No one got it").
+      setTimeout(() => {
+        const modal2 = document.getElementById('question-modal');
+        if (modal2) modal2.classList.remove('flash-wrong');
+        renderStealPanel(false);
+      }, 700);
+    }
+  }
+
+  // Apply a score change and remember it so it can be undone with one tap.
+  function applyAward(index, delta) {
+    game.adjustScore(index, delta);
+    lastAward = { index, delta };
     renderScoreboard();
+    showUndo();
+  }
+
+  // A small floating "undo last award" affordance (lightweight; the Adjust
+  // modal remains for deeper edits).
+  function showUndo() {
+    if (!lastAward) return;
+    let bar = document.getElementById('undo-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'undo-bar';
+      bar.className = 'undo-bar';
+      document.body.appendChild(bar);
+    }
+    const p = game.players[lastAward.index];
+    const sign = lastAward.delta >= 0 ? '+' : '−';
+    bar.innerHTML = `
+      <span>${escapeHtml(p ? p.name : 'Player')}: ${sign}$${Math.abs(lastAward.delta)}</span>
+      <button class="btn btn-secondary btn-small" onclick="window.app.undoLastAward()">&#8630; Undo</button>`;
+    bar.classList.add('show');
+    clearTimeout(showUndo._t);
+    showUndo._t = setTimeout(() => { if (bar) bar.classList.remove('show'); }, 6000);
+  }
+
+  function undoLastAward() {
+    if (!lastAward) return;
+    game.adjustScore(lastAward.index, -lastAward.delta);
+    lastAward = null;
+    renderScoreboard();
+    const bar = document.getElementById('undo-bar');
+    if (bar) bar.classList.remove('show');
+    sound.playClick();
+    // Re-open the cell if it was already closed by finishQuestion.
+    const q = game.currentQuestion;
+    if (q && game.answeredCells.has(q.cellKey)) {
+      game.answeredCells.delete(q.cellKey);
+      game.answeredCount = Math.max(0, game.answeredCount - 1);
+      game.isGameOver = false;
+      renderBoard();
+    }
+    showToast('Last award undone', 'success');
+  }
+
+  function celebrateAward() {
+    showAnswer();
     const modal = document.getElementById('question-modal');
     sound.playCorrect();
-    modal.classList.remove('flash-wrong');
-    modal.classList.add('flash-correct');
-    const rect = modal.getBoundingClientRect();
-    particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
-    particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
-    setTimeout(finishQuestion, 1100);
+    if (modal) {
+      modal.classList.remove('flash-wrong');
+      modal.classList.add('flash-correct');
+      const rect = modal.getBoundingClientRect();
+      particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 40);
+      particles.createStarBurst(rect.left + rect.width / 2, rect.top + rect.height / 3);
+    }
   }
 
   function noOneGotIt() {
@@ -1366,6 +1482,14 @@
     overlay.classList.remove('active');
     selectedAnsweringPlayer = null;
     answerShown = false;
+    // Reset any cell left mid-flip (e.g. dismissed without resolving), so it
+    // doesn't stay stuck in the flip animation. Does NOT mark it answered.
+    document.querySelectorAll('.board-cell.flipping').forEach(c => c.classList.remove('flipping'));
+    // Return focus to the triggering cell for keyboard users.
+    if (lastFocusedTrigger && typeof lastFocusedTrigger.focus === 'function') {
+      lastFocusedTrigger.focus();
+      lastFocusedTrigger = null;
+    }
   }
 
   // ---- Interactive Challenge ----
@@ -1705,7 +1829,7 @@
     if (!input) return;
     input.focus();
     input.select();
-    const done = () => { if (hint) hint.textContent = 'â Link copied! Send it to your friends.'; sound.playCorrect(); };
+    const done = () => { if (hint) hint.textContent = '✓ Link copied! Send it to your friends.'; sound.playCorrect(); };
     const fail = () => { if (hint) hint.textContent = 'Press Ctrl/Cmd+C to copy the selected link.'; };
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(input.value).then(done).catch(() => {
@@ -2283,9 +2407,22 @@
     return div.innerHTML;
   }
 
+  // Escape a string for safe use inside a single-quoted JS string that itself
+  // lives inside a double-quoted HTML attribute, e.g.
+  //   onclick="window.app.foo('${escapeJs(name)}')"
+  // Backslash MUST be escaped first. We also HTML-encode the characters that
+  // could break out of the attribute (", <, >, &) so names containing quotes,
+  // parentheses, or markup can't corrupt the handler.
   function escapeJs(str) {
     if (!str) return '';
-    return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    return String(str)
+      .replace(/\\/g, '\\\\')   // backslash first
+      .replace(/'/g, "\\'")     // close the JS string
+      .replace(/\r?\n/g, ' ')   // no raw newlines in an attribute
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')  // close the HTML attribute
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   function formatDate(isoString) {
@@ -2312,6 +2449,26 @@
     document.addEventListener('keydown', (e) => {
       if (challengeActive && e.key === 'Enter') {
         handleChallengeInput(e);
+      }
+    });
+
+    // Focus trap: keep Tab focus inside whichever modal overlay is open.
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const openOverlay = document.querySelector('.modal-overlay.active');
+      if (!openOverlay) return;
+      const focusables = openOverlay.querySelectorAll(
+        'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      } else if (!openOverlay.contains(document.activeElement)) {
+        e.preventDefault(); first.focus();
       }
     });
 
@@ -2443,7 +2600,9 @@
     selectCell,
     selectAnsweringPlayer,
     showAnswer,
-    awardTo,
+    awardTurn,
+    resolveSteal,
+    undoLastAward,
     noOneGotIt,
     bonusFromQuestion,
     skipQuestion,

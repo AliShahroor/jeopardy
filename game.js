@@ -110,7 +110,7 @@ class JeopardyGame {
     this.totalCells = state.totalCells;
     this.answeredCount = state.answeredCount;
     this.isGameOver = state.isGameOver;
-    this.bonusLifelines = state.bonusLifelines != null ? state.bonusLifelines : 2;
+    this.bonusLifelines = state.bonusLifelines != null ? state.bonusLifelines : 3;
   }
 
   // Save game state
@@ -169,29 +169,6 @@ class JeopardyGame {
     };
 
     return this.currentQuestion;
-  }
-
-  answerQuestion(cellKey, isCorrect, playerIndex) {
-    if (this.answeredCells.has(cellKey)) return false;
-
-    this.answeredCells.add(cellKey);
-    this.answeredCount++;
-
-    const question = this.currentQuestion;
-    if (!question) return false;
-
-    if (isCorrect) {
-      this.players[playerIndex].score += question.points;
-    } else {
-      this.players[playerIndex].score -= question.points;
-    }
-
-    // Check if game is over
-    if (this.answeredCount >= this.totalCells) {
-      this.isGameOver = true;
-    }
-
-    return true;
   }
 
   skipQuestion(cellKey) {
@@ -288,12 +265,10 @@ class JeopardyGame {
     const alreadyAnswered = this.challengeCorrectAnswers.includes(normalizedInput);
     if (alreadyAnswered) return { valid: false, alreadyAnswered: true };
 
-    // Check for match (including partial matches for multi-word answers)
-    const isValid = validAnswers.some(answer => {
-      return answer === normalizedInput ||
-             answer.startsWith(normalizedInput) ||
-             normalizedInput.startsWith(answer);
-    });
+    // Exact match only against the normalized answer set (aliases like "uk" /
+    // "united kingdom" are listed explicitly in CHALLENGE_ANSWERS). Prefix
+    // matching is intentionally NOT used, so a single letter cannot match.
+    const isValid = validAnswers.includes(normalizedInput);
 
     if (isValid) {
       this.challengeCorrectAnswers.push(normalizedInput);

@@ -350,6 +350,17 @@ body::before {
   color: rgba(255, 255, 255, 0.25);
 }
 
+/* ---- Global keyboard focus indicator (a11y) ---- */
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Don't show the ring for mouse clicks on inputs (they have their own style). */
+.input-field:focus:not(:focus-visible) {
+  outline: none;
+}
+
 select.input-field {
   cursor: pointer;
   appearance: none;
@@ -524,7 +535,7 @@ textarea.input-field {
   display: block;
   font-size: 0.8rem;
   font-weight: 400;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.6);
   margin-top: 4px;
 }
 
@@ -1012,6 +1023,13 @@ textarea.input-field {
 }
 
 /* The Jeopardy Board */
+/* Horizontal-scroll wrapper so a 6-column board doesn't crush on phones. */
+.board-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .jeopardy-board {
   width: 100%;
   max-width: 1200px;
@@ -1043,6 +1061,9 @@ textarea.input-field {
 }
 
 .board-cell {
+  width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
   background: linear-gradient(180deg, #1A1AFF, var(--primary-blue));
   border: 2px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
@@ -1060,6 +1081,10 @@ textarea.input-field {
   position: relative;
   overflow: hidden;
   user-select: none;
+}
+
+.board-cell[disabled] {
+  pointer-events: none;
 }
 
 .board-cell::before {
@@ -1529,7 +1554,7 @@ textarea.input-field {
 
 .saved-game-info .saved-meta {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.6);
   line-height: 1.6;
 }
 
@@ -1671,18 +1696,21 @@ textarea.input-field {
 @media (max-width: 480px) {
   .jeopardy-board {
     gap: 3px;
+    /* Keep columns readable; if it exceeds the viewport the .board-scroll
+       wrapper provides horizontal scrolling instead of crushing the text. */
+    min-width: 480px;
   }
 
   .board-cell {
-    min-height: 45px;
-    font-size: 0.85rem;
+    min-height: 52px;
+    font-size: 0.95rem;
     border-radius: 4px;
   }
 
   .board-category-header {
-    font-size: 0.55rem;
+    font-size: 0.62rem;
     padding: 8px 3px;
-    min-height: 40px;
+    min-height: 46px;
     border-radius: 4px;
   }
 
@@ -2190,3 +2218,38 @@ textarea.input-field {
 .feud-slot.revealed { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: var(--dark); border-color: var(--gold); font-weight: 700; }
 .feud-rank { width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
 .feud-slot.revealed .feud-rank { background: rgba(0,0,0,0.25); color: #fff; }
+
+/* ---- Undo-last-award bar (lightweight; Adjust modal remains for deep edits) ---- */
+.undo-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translate(-50%, 120%);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: rgba(20, 20, 50, 0.95);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  color: var(--white);
+  font-size: 0.95rem;
+  z-index: 9000;
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  pointer-events: none;
+}
+.undo-bar.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ---- Steal resolve rows ---- */
+.steal-row .resolve-btn {
+  padding: 6px 12px;
+  border: 2px solid;
+  border-radius: 8px;
+  font-weight: 700;
+}

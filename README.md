@@ -3,6 +3,8 @@
 A polished, fully client-side Jeopardy party game. No backend, no build step,
 no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md`).
 
+**Live site:** https://alishahroor.github.io/jeopardy/
+
 ## Features
 
 - **Login** with a name (saved locally, with quick-login for returning players).
@@ -43,11 +45,28 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 
 | File | Purpose |
 |------|---------|
-| `index.html` | All screens (login, menu, setup, board, modals). |
+| `index.html` | All screens (login, menu, setup, board, modals). Loads the data files in order: `jeopardy-data.js`, `jeopardy-extra.js`, `questions.js`, then `game.js`, `app.js`. |
 | `style.css`  | All styling (dark/gold Jeopardy theme, responsive). |
-| `questions.js` | The curated question bank (26 categories) + challenge answer sets. |
+| `jeopardy-data.js` | `REAL_CATEGORIES` — the broad, curated direct-Q&A themes (General Knowledge, Movies & TV, etc.), 8 questions per point tier. Loaded **first**. |
+| `jeopardy-extra.js` | `EXTRA_QUESTIONS` (more questions for existing categories + a few new ones like Logos & Brands, TV Shows), plus `FAMILY_FEUD` survey data and `NAME_PROMPTS_EXTRA` for the bonus rounds. |
+| `questions.js` | Defines `QUESTION_BANK` (genre categories like Video Games, Anime, Flags) **and** runs the merge pipeline (see below), plus `CHALLENGE_ANSWERS` for the rapid-fire challenges. |
 | `game.js` | Game engine, local storage, sound, and particle systems. |
-| `app.js` | UI controller: screens, board rendering, sharing, etc. |
+| `app.js` | UI controller: screens, board rendering, the resolve/steal flow, bonus rounds, sharing, etc. |
+
+### How the question bank is assembled
+
+The playable bank is built in `questions.js` at load time, in this order:
+
+1. Start with the `QUESTION_BANK` literal defined in `questions.js`.
+2. `Object.assign(QUESTION_BANK, REAL_CATEGORIES)` — merge in (and overwrite
+   same-named categories from) `jeopardy-data.js`.
+3. **Filter:** every category **not** listed in `ACTIVE_CATEGORIES`
+   (in `questions.js`) is deleted. This is the curated, user-visible set.
+4. Merge in `EXTRA_QUESTIONS` from `jeopardy-extra.js` (de-duped by question
+   text), then sprinkle in a few interactive rapid-fire challenges.
+
+> Note: because of step 3, any category whose name is not in `ACTIVE_CATEGORIES`
+> never appears in a game.
 
 ## Adding your own genre to the built-in bank
 
@@ -60,7 +79,10 @@ Open `questions.js` and add a new key to `QUESTION_BANK`:
 ]
 ```
 
-Optionally add an icon for it in `app.js` → `CATEGORY_ICONS`.
+**Important:** you must also add `"My Genre"` to the `ACTIVE_CATEGORIES` array in
+`questions.js` — otherwise the merge pipeline (step 3 above) filters it out and
+it will never show up on the board. Optionally add an icon for it in
+`app.js` → `CATEGORY_ICONS`.
 
 ## Note on "AI generates any genre"
 
