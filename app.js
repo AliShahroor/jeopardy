@@ -1858,13 +1858,19 @@
   }
 
   function buildBonusPool() {
-    // Rapid-fire should be STRAIGHTFORWARD: use only the easy tiers ($200/$400).
-    const pool = [];
-    Object.keys(QUESTION_BANK).forEach(cat => {
-      (QUESTION_BANK[cat] || []).forEach(q => {
-        if (q.type === 'text' && q.q && q.a && q.points <= 400) pool.push({ q: q.q, a: q.a });
+    // Bonus rapid-fire uses its OWN bank (bonus-data.js / RAPID_FIRE), kept
+    // separate from the board so players never see the same question twice.
+    // Falls back to the easy board tiers only if the bonus bank is unavailable.
+    let pool = [];
+    if (typeof RAPID_FIRE !== 'undefined' && RAPID_FIRE.length) {
+      pool = RAPID_FIRE.map(q => ({ q: q.q, a: q.a, accept: q.accept || [] }));
+    } else {
+      Object.keys(QUESTION_BANK).forEach(cat => {
+        (QUESTION_BANK[cat] || []).forEach(q => {
+          if (q.type === 'text' && q.q && q.a && q.points <= 400) pool.push({ q: q.q, a: q.a, accept: [] });
+        });
       });
-    });
+    }
     for (let i = pool.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -1887,17 +1893,24 @@
       return;
     }
     const pick = pickTwoPlayers();
+    const teamsHaveMembers = game.players.some(p => p.members && p.members.length);
     bonusState = {
-      mode: 'trivia',            // 'trivia' (rapid-fire) | 'name' (bidding) | 'feud'
+      mode: 'trivia',            // 'trivia' (rapid-fire) | 'name' | 'wager' | 'feud'
       a: pick.a, b: pick.b,
       duration: 45,
-      scores: { a: 0, b: 0 },    // used by trivia mode
+      perCorrect: 100,           // rapid-fire: $ per correct answer
+      scores: { a: 0, b: 0 },    // rapid-fire correct counts
+      earned: { a: 0, b: 0 },    // rapid-fire $ earned (banked at end)
       current: 'a', queue: [], qIndex: 0,
       prompt: NAME_PROMPTS[Math.floor(Math.random() * NAME_PROMPTS.length)],
-      bid: 10, attempter: 'a', count: 0,
+      nameScoring: 'rate',       // 'rate' (per N named) | 'bid' (all-or-nothing)
+      ratePer: 10, ratePay: 100, // rate mode: every <ratePer> named = $<ratePay>
+      bid: 10, attempter: 'a', count: 0, namedList: [],
+      wagerSide: 'a', wager: 500, wagerQ: null, // double-or-nothing
       feudIndex: (typeof FAMILY_FEUD !== 'undefined') ? Math.floor(Math.random() * FAMILY_FEUD.length) : 0,
-      feudRevealed: {},
-      useReps: false, repA: null, repB: null
+      feudRevealed: {}, feudFound: { a: 0, b: 0 },
+      // Default to random individuals facing off in team games (random vs random).
+      useReps: teamsHaveMembers, repA: null, repB: null
     };
     rollBonusReps();
     sound.playClick();
@@ -1971,6 +1984,35 @@
     renderBonusSetup();
   }
 
+  function setNameScoring(mode) {
+    bonusState.nameScoring = mode;
+    sound.playClick();
+    renderBonusSetup();
+  }
+  function setRate(which, delta) {
+    if (which === 'per') bonusState.ratePer = Math.max(1, Math.min(100, bonusState.ratePer + delta));
+    else bonusState.ratePay = Math.max(25, Math.min(1000, bonusState.ratePay + delta));
+    sound.playClick();
+    renderBonusSetup();
+  }
+
+  // ---- High-Stakes wager helpers ----
+  function wagerCap() {
+    const w = game.players[bonusState.a];
+    return Math.max(500, (w && w.score) || 0);
+  }
+  function setWagerPlayer(i) {
+    bonusState.a = i;
+    bonusState.wager = Math.min(bonusState.wager, wagerCap());
+    sound.playClick();
+    renderBonusSetup();
+  }
+  function setWager(delta) {
+    bonusState.wager = Math.max(100, Math.min(wagerCap(), bonusState.wager + delta));
+    sound.playClick();
+    renderBonusSetup();
+  }
+
   function playerOption(slot) {
     return game.players.map((p, i) =>
       `<option value="${i}" ${bonusState[slot] === i ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
@@ -1983,12 +2025,14 @@
     const mode = bonusState.mode;
     const isName = mode === 'name';
     const isFeud = mode === 'feud';
+    const isWager = mode === 'wager';
     const teamsHaveMembers = game.players.some(p => p.members && p.members.length);
 
     const modeToggle = `
       <div class="bonus-mode-toggle">
         <button class="team-mode-btn ${mode === 'trivia' ? 'selected' : ''}" onclick="window.app.setBonusMode('trivia')">&#9889; Rapid-Fire</button>
         <button class="team-mode-btn ${isName ? 'selected' : ''}" onclick="window.app.setBonusMode('name')">&#128221; Name as Many</button>
+        <button class="team-mode-btn ${isWager ? 'selected' : ''}" onclick="window.app.setBonusMode('wager')">&#127920; High Stakes</button>
         <button class="team-mode-btn ${isFeud ? 'selected' : ''}" onclick="window.app.setBonusMode('feud')">&#128101; Family Feud</button>
       </div>`;
 
@@ -2019,7 +2063,7 @@
     let body, desc, startBtn;
     if (isFeud) {
       const feud = (typeof FAMILY_FEUD !== 'undefined') ? FAMILY_FEUD : [];
-      desc = `Survey says! Both sides guess the top answers. Reveal them one by one, then award <strong>+$250</strong> to the side that found the most.`;
+      desc = `Survey says! Reveal the top answers and tap who called each one. Every answer a side finds banks <strong>+$50</strong>.`;
       body = `
         ${vs}
         <div class="bonus-name-setup">
@@ -2029,23 +2073,62 @@
           </select>
         </div>`;
       startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusFeud()">Start Feud!</button>`;
+    } else if (isWager) {
+      const cap = wagerCap();
+      desc = `Double or nothing! One contestant wagers up to <strong>$${cap}</strong>, then faces one tough question (type the answer). Nail it &rarr; <strong>win the wager</strong>. Miss &rarr; <strong>lose it</strong>.`;
+      body = `
+        <div class="bonus-name-setup">
+          <label class="bonus-field-label">Who's taking the risk?</label>
+          <div class="bonus-attempter bonus-attempter--wrap">
+            ${game.players.map((p, i) => `<button class="team-mode-btn ${bonusState.a === i ? 'selected' : ''}" style="border-color:${p.color}" onclick="window.app.setWagerPlayer(${i})">${escapeHtml(p.name)} <small>($${p.score})</small></button>`).join('')}
+          </div>
+          <label class="bonus-field-label">Wager (max $${cap})</label>
+          <div class="bid-stepper">
+            <button class="btn btn-secondary" onclick="window.app.setWager(-100)">&minus;</button>
+            <span class="bid-value">$${bonusState.wager}</span>
+            <button class="btn btn-secondary" onclick="window.app.setWager(100)">+</button>
+          </div>
+        </div>`;
+      startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusWager()">&#127922; Roll the Dice</button>`;
     } else if (isName) {
-      desc = `Pick a topic and bid: "I can name X." The bidder must name that many before time runs out. Make it &rarr; <strong>+$250</strong>; fall short &rarr; the opponent gets <strong>+$250</strong>.`;
+      const key = (typeof NAME_PROMPT_KEY !== 'undefined') ? NAME_PROMPT_KEY[bonusState.prompt] : null;
+      const typed = key && typeof NAME_SETS !== 'undefined' && NAME_SETS[key];
+      const isRate = bonusState.nameScoring === 'rate';
+      desc = isRate
+        ? `Name as many as you can. Every <strong>${bonusState.ratePer}</strong> you name banks <strong>+$${bonusState.ratePay}</strong>.`
+        : `Bid how many you can name. Make it &rarr; <strong>+$${bonusState.bid * 25}</strong> (bid &times; $25); fall short &rarr; opponent gets <strong>+$100</strong>.`;
       const attA = game.players[bonusState.a], attB = game.players[bonusState.b];
       body = `
         ${vs}
         <div class="bonus-name-setup">
-          <label class="bonus-field-label">Topic to name</label>
+          <label class="bonus-field-label">Topic to name ${typed ? '<span class="typed-badge">type to auto-check</span>' : '<span class="typed-badge muted">host counts</span>'}</label>
           <select class="input-field" onchange="window.app.setBonusPrompt(this.value)">
             ${NAME_PROMPTS.map(p => `<option ${p === bonusState.prompt ? 'selected' : ''}>${escapeHtml(p)}</option>`).join('')}
           </select>
-          <label class="bonus-field-label">Winning bid &mdash; how many will they name?</label>
+          <label class="bonus-field-label">Scoring</label>
+          <div class="bonus-attempter">
+            <button class="team-mode-btn ${isRate ? 'selected' : ''}" onclick="window.app.setNameScoring('rate')">Rate ($ per group)</button>
+            <button class="team-mode-btn ${!isRate ? 'selected' : ''}" onclick="window.app.setNameScoring('bid')">Bid (all or nothing)</button>
+          </div>
+          ${isRate ? `
+          <label class="bonus-field-label">Every <strong>${bonusState.ratePer}</strong> named = <strong>$${bonusState.ratePay}</strong></label>
+          <div class="bid-stepper">
+            <span class="bid-label">per</span>
+            <button class="btn btn-secondary" onclick="window.app.setRate('per',-5)">&minus;</button>
+            <span class="bid-value">${bonusState.ratePer}</span>
+            <button class="btn btn-secondary" onclick="window.app.setRate('per',5)">+</button>
+            <span class="bid-label">= $</span>
+            <button class="btn btn-secondary" onclick="window.app.setRate('pay',-50)">&minus;</button>
+            <span class="bid-value">${bonusState.ratePay}</span>
+            <button class="btn btn-secondary" onclick="window.app.setRate('pay',50)">+</button>
+          </div>` : `
+          <label class="bonus-field-label">Winning bid &mdash; how many?</label>
           <div class="bid-stepper">
             <button class="btn btn-secondary" onclick="window.app.setBonusBid(-1)">&minus;</button>
             <span class="bid-value">${bonusState.bid}</span>
             <button class="btn btn-secondary" onclick="window.app.setBonusBid(1)">+</button>
-          </div>
-          <label class="bonus-field-label">Who took the bid (has to name them)?</label>
+          </div>`}
+          <label class="bonus-field-label">Who's naming?</label>
           <div class="bonus-attempter">
             <button class="team-mode-btn ${bonusState.attempter === 'a' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('a')" style="border-color:${attA.color}">${contestantLabel('a')}</button>
             <button class="team-mode-btn ${bonusState.attempter === 'b' ? 'selected' : ''}" onclick="window.app.setBonusAttempter('b')" style="border-color:${attB.color}">${contestantLabel('b')}</button>
@@ -2054,12 +2137,12 @@
         <div class="bonus-duration">
           <span>Timer:</span>
           <div class="timer-selector">
-            ${[30, 45, 60].map(d => `<button class="timer-option ${bonusState.duration === d ? 'selected' : ''}" onclick="window.app.setBonusDuration(${d})">${d}s</button>`).join('')}
+            ${[30, 45, 60, 90].map(d => `<button class="timer-option ${bonusState.duration === d ? 'selected' : ''}" onclick="window.app.setBonusDuration(${d})">${d}s</button>`).join('')}
           </div>
         </div>`;
       startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusName()">Start Naming!</button>`;
     } else {
-      desc = `Two contestants go one at a time: answer as many questions as you can before the clock runs out. Most correct wins <strong>+$250</strong>.`;
+      desc = `Two contestants take turns. Type each answer &mdash; every correct one banks <strong>+$${bonusState.perCorrect}</strong>. Keep what you earn!`;
       body = `
         ${vs}
         <div class="bonus-duration">
@@ -2068,7 +2151,7 @@
             ${[30, 45, 60].map(d => `<button class="timer-option ${bonusState.duration === d ? 'selected' : ''}" onclick="window.app.setBonusDuration(${d})">${d}s</button>`).join('')}
           </div>
         </div>`;
-      startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusDuel()">Start Duel</button>`;
+      startBtn = `<button class="btn btn-primary btn-large" onclick="window.app.startBonusDuel()">Start Rapid-Fire</button>`;
     }
 
     m.innerHTML = `
@@ -2175,19 +2258,23 @@
       <div class="bonus-play">
         <div class="bonus-play-head">
           <span style="color:${p.color}; font-weight:700">${escapeHtml(p.name)}</span>
-          <span class="bonus-score">Correct: <strong id="bonus-count">${bonusState.scores[slot]}</strong></span>
+          <span class="bonus-score">Earned <strong id="bonus-earned">$${bonusState.earned[slot]}</strong> &middot; <span id="bonus-count">${bonusState.scores[slot]}</span> right</span>
         </div>
         <div class="timer-bar-wrapper"><div class="timer-bar" id="bonus-timer-bar" style="width:100%"></div></div>
         <div class="timer-display" id="bonus-timer-display">${bonusState.duration}</div>
         <div class="bonus-question">${escapeHtml(q.q)}</div>
+        <input type="text" id="bonus-input" class="input-field bonus-input" autocomplete="off" placeholder="Type the answer &amp; press Enter…" onkeydown="if(event.key==='Enter'){event.preventDefault();window.app.bonusSubmitTyped();}">
         <div class="bonus-answer" id="bonus-answer" style="display:none;">Answer: <strong>${escapeHtml(q.a)}</strong></div>
         <div class="bonus-play-actions">
-          <button class="btn btn-secondary btn-small" onclick="window.app.bonusPeek()">&#128065; Check</button>
-          <button class="btn btn-success" onclick="window.app.bonusCorrect()">&#10003; Correct</button>
-          <button class="btn btn-secondary" onclick="window.app.bonusSkip()">Skip &rarr;</button>
+          <button class="btn btn-success" onclick="window.app.bonusSubmitTyped()">&#10003; Submit (+$${bonusState.perCorrect})</button>
+          <button class="btn btn-secondary btn-small" onclick="window.app.bonusPeek()">&#128065; Reveal</button>
+          <button class="btn btn-secondary btn-small" onclick="window.app.bonusMarkCorrect()">Mark right</button>
+          <button class="btn btn-secondary btn-small" onclick="window.app.bonusSkip()">Skip &rarr;</button>
         </div>
       </div>
     `;
+    const inp = document.getElementById('bonus-input');
+    if (inp) inp.focus();
   }
 
   function bonusPeek() {
@@ -2195,9 +2282,33 @@
     if (a) a.style.display = a.style.display === 'none' ? 'block' : 'none';
   }
 
+  // Typed answer: fuzzy-matched (synonyms/typos) against the question's answer.
+  function bonusSubmitTyped() {
+    const inp = document.getElementById('bonus-input');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) return;
+    const q = currentBonusQuestion();
+    if (window.fuzzyAnswerMatch(val, q.a, q.accept)) {
+      bonusAdvance(true);
+    } else {
+      inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+      if (sound.playWrong) sound.playWrong();
+      inp.value = '';
+      inp.focus();
+    }
+  }
+
+  // Host override — count the current question right without typing.
+  function bonusMarkCorrect() { bonusAdvance(true); }
+
   function bonusAdvance(correct) {
     const slot = bonusState.current;
-    if (correct) { bonusState.scores[slot]++; sound.playChallengeCorrect(); }
+    if (correct) {
+      bonusState.scores[slot]++;
+      bonusState.earned[slot] += bonusState.perCorrect;
+      sound.playChallengeCorrect();
+    }
     bonusState.qIndex++;
     renderBonusPlay();
   }
@@ -2206,17 +2317,11 @@
 
   function endBonusDuel() {
     game.stopTimer();
-    const sa = bonusState.scores.a, sb = bonusState.scores.b;
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
-    let resultHtml;
-    if (sa === sb) {
-      resultHtml = `<p class="bonus-result-tie">It's a tie at ${sa}! No bonus awarded.</p>`;
-    } else {
-      const winIdx = sa > sb ? bonusState.a : bonusState.b;
-      const win = game.players[winIdx];
-      game.adjustScore(winIdx, 250);
-      resultHtml = `<p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$250!</p>`;
-    }
+    const ea = bonusState.earned.a, eb = bonusState.earned.b;
+    // Everyone keeps what they earned (per-correct), no winner-take-all.
+    if (ea > 0) game.adjustScore(bonusState.a, ea);
+    if (eb > 0) game.adjustScore(bonusState.b, eb);
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2224,28 +2329,30 @@
     const m = document.getElementById('bonus-modal');
     m.innerHTML = `
       <span class="bonus-icon">&#127942;</span>
-      <h2 class="bonus-title">Bonus Results</h2>
+      <h2 class="bonus-title">Rapid-Fire Results</h2>
       <div class="bonus-final">
-        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(A.name)}</span><strong>${sa} correct</strong></div>
-        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(B.name)}</span><strong>${sb} correct</strong></div>
+        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(A.name)}</span><strong>${bonusState.scores.a} right &middot; +$${ea}</strong></div>
+        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(B.name)}</span><strong>${bonusState.scores.b} right &middot; +$${eb}</strong></div>
       </div>
-      ${resultHtml}
+      <p class="bonus-desc">Everyone keeps what they earned!</p>
       <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>
     `;
-    if (sa !== sb) {
+    if (ea > 0 || eb > 0) {
       const rect = m.getBoundingClientRect();
       particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 50);
       sound.playGameOver();
     }
   }
 
-  // ---- Bonus: "Name as many" bidding challenge ----
+  // ---- Bonus: "Name as many" (rate or bid scoring, with typed auto-check) ----
   function startBonusName() {
     if (bonusState.a === bonusState.b) {
       showToast('Pick two different contestants', 'error');
       return;
     }
     bonusState.count = 0;
+    bonusState.namedList = [];
+    bonusState.nameKey = (typeof NAME_PROMPT_KEY !== 'undefined') ? NAME_PROMPT_KEY[bonusState.prompt] : null;
     sound.playBoardReveal();
     renderBonusNamePlay();
     game.startTimer(bonusState.duration,
@@ -2260,24 +2367,72 @@
     );
   }
 
+  function nameRateEarned() {
+    return Math.floor(bonusState.count / bonusState.ratePer) * bonusState.ratePay;
+  }
+
   function renderBonusNamePlay() {
     const m = document.getElementById('bonus-modal');
     const att = game.players[bonusState.attempter === 'a' ? bonusState.a : bonusState.b];
+    const typed = bonusState.nameKey && typeof NAME_SETS !== 'undefined' && NAME_SETS[bonusState.nameKey];
+    const isBid = bonusState.nameScoring === 'bid';
+    const goalLine = isBid
+      ? `<div class="bonus-name-counter"><span id="bonus-name-count">${bonusState.count}</span> / ${bonusState.bid}</div>`
+      : `<div class="bonus-name-counter"><span id="bonus-name-count">${bonusState.count}</span> named &middot; <span id="bonus-name-pay">$${nameRateEarned()}</span></div>`;
     m.innerHTML = `
       <div class="bonus-play">
         <div class="bonus-play-head">
           <span style="color:${att.color}; font-weight:700">${escapeHtml(att.name)}</span>
-          <span class="bonus-score">Target: <strong>${bonusState.bid}</strong></span>
+          <span class="bonus-score">${isBid ? ('Target: <strong>' + bonusState.bid + '</strong>') : ('Every ' + bonusState.ratePer + ' = $' + bonusState.ratePay)}</span>
         </div>
         <div class="timer-bar-wrapper"><div class="timer-bar" id="bonus-timer-bar" style="width:100%"></div></div>
         <div class="timer-display" id="bonus-timer-display">${bonusState.duration}</div>
         <div class="bonus-question">Name as many as you can:<br><span style="color:var(--gold)">${escapeHtml(bonusState.prompt)}</span></div>
-        <div class="bonus-name-counter"><span id="bonus-name-count">0</span> / ${bonusState.bid}</div>
-        <div class="bonus-play-actions">
-          <button class="btn btn-success btn-large" onclick="window.app.bonusNameCount()">+1 Correct</button>
-          <button class="btn btn-secondary" onclick="window.app.bonusNameDone()">Stop</button>
-        </div>
+        ${goalLine}
+        ${typed ? `
+          <input type="text" id="bonus-input" class="input-field bonus-input" autocomplete="off" placeholder="Type one &amp; press Enter…" onkeydown="if(event.key==='Enter'){event.preventDefault();window.app.bonusNameSubmit();}">
+          <div class="bonus-named-tags" id="bonus-named-tags"></div>
+          <div class="bonus-play-actions">
+            <button class="btn btn-success" onclick="window.app.bonusNameSubmit()">Add</button>
+            <button class="btn btn-secondary" onclick="window.app.bonusNameDone()">Stop &amp; Score</button>
+          </div>` : `
+          <div class="bonus-play-actions">
+            <button class="btn btn-success btn-large" onclick="window.app.bonusNameCount()">+1 Correct</button>
+            <button class="btn btn-secondary" onclick="window.app.bonusNameDone()">Stop &amp; Score</button>
+          </div>`}
       </div>`;
+    const inp = document.getElementById('bonus-input');
+    if (inp) inp.focus();
+    renderNamedTags();
+  }
+
+  function renderNamedTags() {
+    const el = document.getElementById('bonus-named-tags');
+    if (!el) return;
+    el.innerHTML = bonusState.namedList.slice(-15).map(n => `<span class="named-tag">${escapeHtml(n)}</span>`).join('');
+  }
+
+  // Typed entry for set-backed prompts: validates against NAME_SETS, rejects
+  // wrong answers and duplicates.
+  function bonusNameSubmit() {
+    const inp = document.getElementById('bonus-input');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) return;
+    const set = NAME_SETS[bonusState.nameKey];
+    const matched = window.matchNameSet(val, set);
+    const isDup = matched && bonusState.namedList.some(n => window.normalizeAnswer(n) === matched);
+    if (!matched || isDup) {
+      inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+      if (!matched && sound.playWrong) sound.playWrong();
+      inp.value = '';
+      inp.focus();
+      return;
+    }
+    bonusState.namedList.push(val.trim());
+    bonusNameCount();
+    inp.value = '';
+    inp.focus();
   }
 
   function bonusNameCount() {
@@ -2285,20 +2440,31 @@
     sound.playChallengeCorrect();
     const el = document.getElementById('bonus-name-count');
     if (el) el.textContent = bonusState.count;
-    if (bonusState.count >= bonusState.bid) { game.stopTimer(); endBonusName(); }
+    const pay = document.getElementById('bonus-name-pay');
+    if (pay) pay.textContent = '$' + nameRateEarned();
+    renderNamedTags();
+    if (bonusState.nameScoring === 'bid' && bonusState.count >= bonusState.bid) { game.stopTimer(); endBonusName(); }
   }
 
   function bonusNameDone() { game.stopTimer(); endBonusName(); }
 
   function endBonusName() {
     game.stopTimer();
-    const reached = bonusState.count >= bonusState.bid;
     const attIdx = bonusState.attempter === 'a' ? bonusState.a : bonusState.b;
     const oppIdx = bonusState.attempter === 'a' ? bonusState.b : bonusState.a;
     const att = game.players[attIdx];
-    const winIdx = reached ? attIdx : oppIdx;
+    let winIdx, award, title, line;
+    if (bonusState.nameScoring === 'bid') {
+      const reached = bonusState.count >= bonusState.bid;
+      if (reached) { winIdx = attIdx; award = bonusState.bid * 25; title = 'Bid Made!'; }
+      else { winIdx = oppIdx; award = 100; title = 'Came Up Short!'; }
+      line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> of ${bonusState.bid} &mdash; ${escapeHtml(bonusState.prompt)}.`;
+    } else {
+      winIdx = attIdx; award = nameRateEarned(); title = award > 0 ? 'Nice naming!' : "Time's up!";
+      line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> &mdash; ${escapeHtml(bonusState.prompt)} (every ${bonusState.ratePer} = $${bonusState.ratePay}).`;
+    }
     const win = game.players[winIdx];
-    game.adjustScore(winIdx, 250);
+    if (award > 0) game.adjustScore(winIdx, award);
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2306,68 +2472,175 @@
     const m = document.getElementById('bonus-modal');
     m.innerHTML = `
       <span class="bonus-icon">&#127942;</span>
-      <h2 class="bonus-title">${reached ? 'Bid Made!' : 'Came Up Short!'}</h2>
-      <p class="bonus-desc">${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> of ${bonusState.bid} &mdash; ${escapeHtml(bonusState.prompt)}.</p>
-      <p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$250!</p>
+      <h2 class="bonus-title">${title}</h2>
+      <p class="bonus-desc">${line}</p>
+      ${award > 0
+        ? `<p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$${award}!</p>`
+        : `<p class="bonus-result-tie">No points this time.</p>`}
       <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>`;
-    const rect = m.getBoundingClientRect();
-    particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 50);
-    sound.playGameOver();
+    if (award > 0) {
+      const rect = m.getBoundingClientRect();
+      particles.createConfetti(rect.left + rect.width / 2, rect.top + rect.height / 2, 50);
+      sound.playGameOver();
+    }
   }
 
-  // ---- Bonus: Family Feud ----
+  // ---- Bonus: High Stakes (double or nothing) ----
+  function startBonusWager() {
+    bonusState.wagerQ = (function () { const pool = buildBonusPool(); return pool[0] || { q: '(no question available)', a: '', accept: [] }; })();
+    bonusState.duration = 30;
+    sound.playBoardReveal();
+    renderBonusWagerPlay();
+    game.startTimer(30,
+      (remaining) => {
+        const bar = document.getElementById('bonus-timer-bar');
+        const disp = document.getElementById('bonus-timer-display');
+        if (bar) bar.style.width = (remaining / 30 * 100) + '%';
+        if (disp) disp.textContent = remaining;
+        if (remaining <= 5) { if (bar) bar.classList.add('critical'); sound.playTimerWarning(); }
+      },
+      () => { sound.playTimerEnd(); resolveWager(false); }
+    );
+  }
+
+  function renderBonusWagerPlay() {
+    const m = document.getElementById('bonus-modal');
+    const w = game.players[bonusState.a];
+    const q = bonusState.wagerQ;
+    m.innerHTML = `
+      <div class="bonus-play">
+        <div class="bonus-play-head">
+          <span style="color:${w.color}; font-weight:700">${escapeHtml(w.name)}</span>
+          <span class="bonus-score">Wager: <strong>$${bonusState.wager}</strong></span>
+        </div>
+        <div class="timer-bar-wrapper"><div class="timer-bar" id="bonus-timer-bar" style="width:100%"></div></div>
+        <div class="timer-display" id="bonus-timer-display">30</div>
+        <div class="bonus-question">${escapeHtml(q.q)}</div>
+        <input type="text" id="bonus-input" class="input-field bonus-input" autocomplete="off" placeholder="Type your answer &amp; press Enter…" onkeydown="if(event.key==='Enter'){event.preventDefault();window.app.wagerSubmit();}">
+        <div class="bonus-play-actions">
+          <button class="btn btn-success" onclick="window.app.wagerSubmit()">&#10003; Lock it in</button>
+          <button class="btn btn-secondary" onclick="window.app.wagerGiveUp()">Give up</button>
+        </div>
+      </div>`;
+    const inp = document.getElementById('bonus-input');
+    if (inp) inp.focus();
+  }
+
+  function wagerSubmit() {
+    const inp = document.getElementById('bonus-input');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) return;
+    const q = bonusState.wagerQ;
+    resolveWager(window.fuzzyAnswerMatch(val, q.a, q.accept));
+  }
+  function wagerGiveUp() { resolveWager(false); }
+
+  function resolveWager(correct) {
+    game.stopTimer();
+    const idx = bonusState.a;
+    const w = game.players[idx];
+    const q = bonusState.wagerQ;
+    game.adjustScore(idx, correct ? bonusState.wager : -bonusState.wager);
+    if (game.bonusLifelines > 0) game.bonusLifelines--;
+    updateBonusButton();
+    renderScoreboard();
+    const m = document.getElementById('bonus-modal');
+    m.innerHTML = `
+      <span class="bonus-icon">${correct ? '&#127942;' : '&#128128;'}</span>
+      <h2 class="bonus-title">${correct ? 'Big Win!' : 'Wiped Out!'}</h2>
+      <p class="bonus-desc">Answer: <strong>${escapeHtml(q.a)}</strong></p>
+      <p class="${correct ? 'bonus-result-win' : 'bonus-result-tie'}" style="color:${w.color}">${escapeHtml(w.name)} ${correct ? 'wins +$' + bonusState.wager : 'loses $' + bonusState.wager}!</p>
+      <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>`;
+    if (correct) {
+      const r = m.getBoundingClientRect();
+      particles.createConfetti(r.left + r.width / 2, r.top + r.height / 2, 60);
+      sound.playGameOver();
+    } else if (sound.playWrong) {
+      sound.playWrong();
+    }
+  }
+
+  // ---- Bonus: Family Feud (each answer a side finds banks +$50) ----
   function startBonusFeud() {
     if (bonusState.a === bonusState.b) { showToast('Pick two different sides', 'error'); return; }
     if (typeof FAMILY_FEUD === 'undefined' || !FAMILY_FEUD[bonusState.feudIndex]) return;
     bonusState.feudRevealed = {};
+    bonusState.feudFound = { a: 0, b: 0 };
     sound.playBoardReveal();
     renderBonusFeudPlay();
+  }
+
+  // Raw display name for a contestant slot (no HTML), for safe escaping at use.
+  function contestantNameOnly(slot) {
+    const idx = slot === 'a' ? bonusState.a : bonusState.b;
+    const team = game.players[idx];
+    const rep = slot === 'a' ? bonusState.repA : bonusState.repB;
+    if (bonusState.useReps && rep) return rep;
+    return team.name;
   }
 
   function renderBonusFeudPlay() {
     const m = document.getElementById('bonus-modal');
     const f = FAMILY_FEUD[bonusState.feudIndex];
-    const slots = f.answers.map((ans, i) => `
-      <button class="feud-slot ${bonusState.feudRevealed[i] ? 'revealed' : ''}" onclick="window.app.revealFeudAnswer(${i})">
-        <span class="feud-rank">${i + 1}</span>
-        <span class="feud-text">${bonusState.feudRevealed[i] ? escapeHtml(ans) : '&middot; &middot; &middot;'}</span>
-      </button>`).join('');
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
+    const nameA = escapeHtml(contestantNameOnly('a')), nameB = escapeHtml(contestantNameOnly('b'));
+    const slots = f.answers.map((ans, i) => {
+      const who = bonusState.feudRevealed[i];
+      if (who) {
+        const p = who === 'a' ? A : B;
+        return `<div class="feud-slot revealed">
+          <span class="feud-rank" style="background:${p.color}">${i + 1}</span>
+          <span class="feud-text">${escapeHtml(ans)} <small style="color:${p.color}">(${who === 'a' ? nameA : nameB})</small></span>
+        </div>`;
+      }
+      return `<div class="feud-slot">
+        <span class="feud-rank">${i + 1}</span>
+        <span class="feud-text">&middot; &middot; &middot;</span>
+        <span class="feud-credit">
+          <button class="btn btn-small" style="border-color:${A.color};color:${A.color}" onclick="window.app.revealFeudAnswer(${i},'a')">${nameA}</button>
+          <button class="btn btn-small" style="border-color:${B.color};color:${B.color}" onclick="window.app.revealFeudAnswer(${i},'b')">${nameB}</button>
+        </span>
+      </div>`;
+    }).join('');
     m.innerHTML = `
       <span class="bonus-icon">&#128101;</span>
       <h2 class="bonus-title">Family Feud</h2>
       <p class="bonus-feud-q">${escapeHtml(f.prompt)}</p>
-      <p class="bonus-desc">Tap an answer to reveal it as a side calls it out.</p>
+      <p class="bonus-desc">Reveal each answer and tap the side that called it. Each find = <strong>+$50</strong>.</p>
       <div class="feud-board">${slots}</div>
-      <p class="bonus-field-label">Who found the most? Award +$250:</p>
-      <div class="resolve-players">
-        <button class="resolve-btn" style="border-color:${A.color};color:${A.color}" onclick="window.app.awardFeud('a')">${contestantLabel('a')}</button>
-        <button class="resolve-btn" style="border-color:${B.color};color:${B.color}" onclick="window.app.awardFeud('b')">${contestantLabel('b')}</button>
-      </div>
+      <p class="bonus-field-label" style="text-align:center">${nameA}: <strong>${bonusState.feudFound.a}</strong> &nbsp;&middot;&nbsp; ${nameB}: <strong>${bonusState.feudFound.b}</strong></p>
       <div class="judge-buttons" style="margin-top:12px;">
-        <button class="btn btn-secondary" onclick="window.app.awardFeud('tie')">Tie / no winner</button>
+        <button class="btn btn-primary btn-large" onclick="window.app.finishFeud()">Finish &amp; Award</button>
       </div>`;
   }
 
-  function revealFeudAnswer(i) {
-    bonusState.feudRevealed[i] = true;
+  function revealFeudAnswer(i, side) {
+    if (bonusState.feudRevealed[i]) return;
+    bonusState.feudRevealed[i] = side;
+    bonusState.feudFound[side] = (bonusState.feudFound[side] || 0) + 1;
     sound.playChallengeCorrect();
     renderBonusFeudPlay();
   }
 
-  function awardFeud(winner) {
-    const win = winner === 'tie' ? null : game.players[winner === 'a' ? bonusState.a : bonusState.b];
-    if (win) game.adjustScore(winner === 'a' ? bonusState.a : bonusState.b, 250);
+  function finishFeud() {
+    const aPay = bonusState.feudFound.a * 50, bPay = bonusState.feudFound.b * 50;
+    if (aPay > 0) game.adjustScore(bonusState.a, aPay);
+    if (bPay > 0) game.adjustScore(bonusState.b, bPay);
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
+    const A = game.players[bonusState.a], B = game.players[bonusState.b];
     const m = document.getElementById('bonus-modal');
     m.innerHTML = `
       <span class="bonus-icon">&#127942;</span>
-      <h2 class="bonus-title">${winner === 'tie' ? "It's a tie!" : 'Bonus Won!'}</h2>
-      ${win ? `<p class="bonus-result-win" style="color:${win.color}">&#127942; ${escapeHtml(win.name)} wins +$250!</p>` : '<p class="bonus-result-tie">No points awarded.</p>'}
+      <h2 class="bonus-title">Feud Results</h2>
+      <div class="bonus-final">
+        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(contestantNameOnly('a'))}</span><strong>${bonusState.feudFound.a} found &middot; +$${aPay}</strong></div>
+        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(contestantNameOnly('b'))}</span><strong>${bonusState.feudFound.b} found &middot; +$${bPay}</strong></div>
+      </div>
       <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>`;
-    if (win) {
+    if (aPay > 0 || bPay > 0) {
       const r = m.getBoundingClientRect();
       particles.createConfetti(r.left + r.width / 2, r.top + r.height / 2, 50);
       sound.playGameOver();
@@ -2579,17 +2852,27 @@
     setBonusAttempter,
     setBonusUseReps,
     setBonusFeud,
+    setNameScoring,
+    setRate,
+    setWagerPlayer,
+    setWager,
     randomizeBonus,
     rerollBonus,
     startBonusDuel,
     startBonusFeud,
+    startBonusWager,
+    wagerSubmit,
+    wagerGiveUp,
     revealFeudAnswer,
-    awardFeud,
+    finishFeud,
     beginBonusTurn,
     bonusPeek,
+    bonusSubmitTyped,
+    bonusMarkCorrect,
     bonusCorrect,
     bonusSkip,
     startBonusName,
+    bonusNameSubmit,
     bonusNameCount,
     bonusNameDone,
     closeBonus,

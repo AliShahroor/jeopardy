@@ -419,9 +419,11 @@
       <div class="glass-card howto-section">
         <h3><span class="howto-icon">&#9889;</span> Bonus Rounds (Lifeline)</h3>
         <ul>
-          <li>Tap <strong>&#9889; Bonus</strong> mid-game for a head-to-head &mdash; optional, and you get <strong>2 per game</strong>.</li>
-          <li><strong>Rapid-Fire Trivia:</strong> two contestants each get 30&ndash;60s to answer as many questions as they can. Most correct wins <strong>+$250</strong>.</li>
-          <li><strong>Name as Many:</strong> pick a topic (e.g. "Countries in Europe") and bid &mdash; "I can name 15," "I can name 16!" The high bidder must name that many before time runs out. Make it and they win <strong>+$250</strong>; fall short and the opponent does.</li>
+          <li>Tap <strong>&#9889; Bonus</strong> mid-game &mdash; optional, configurable count per game. In team games it pits a <strong>random player from each side</strong> against each other. Bonus questions come from a <strong>separate bank</strong>, so you never see a board question twice.</li>
+          <li><strong>&#9889; Rapid-Fire:</strong> two contestants take turns. <strong>Type each answer</strong> (close spellings &amp; synonyms count) &mdash; every correct one banks <strong>+$100</strong>. You keep everything you earn.</li>
+          <li><strong>&#128221; Name as Many:</strong> pick a topic and either play <em>Rate</em> (every N you name banks $X &mdash; e.g. every 10 countries = $100) or <em>Bid</em> (call a number; hit it for <strong>bid &times; $25</strong>, miss and the opponent gets $100). For supported topics you <strong>type answers</strong> and they auto-validate.</li>
+          <li><strong>&#127920; High Stakes:</strong> double-or-nothing. One player wagers up to their score, then faces one question &mdash; nail it to win the wager, miss it to lose it.</li>
+          <li><strong>&#128101; Family Feud:</strong> reveal the survey answers and tap who called each one &mdash; every find banks <strong>+$50</strong> for that side.</li>
         </ul>
       </div>
 
@@ -454,6 +456,8 @@
   <!-- Scripts -->
   <script src="jeopardy-data.js"></script>
   <script src="jeopardy-extra.js"></script>
+  <script src="bonus-data.js"></script>
+  <script src="enrich-data.js"></script>
   <script src="questions.js"></script>
   <script src="game.js"></script>
   <script src="app.js"></script>

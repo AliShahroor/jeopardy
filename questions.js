@@ -491,6 +491,51 @@ if (typeof EXTRA_QUESTIONS !== 'undefined') {
   });
 }
 
+// Merge enrichment questions (extra tough/varied items for the genre categories),
+// de-duping by question text just like EXTRA_QUESTIONS.
+if (typeof ENRICH_QUESTIONS !== 'undefined') {
+  Object.keys(ENRICH_QUESTIONS).forEach(cat => {
+    if (!QUESTION_BANK[cat]) QUESTION_BANK[cat] = [];
+    const seen = new Set(QUESTION_BANK[cat].map(q => (q.q || '').toLowerCase().trim()));
+    ENRICH_QUESTIONS[cat].forEach(q => {
+      const key = (q.q || '').toLowerCase().trim();
+      if (!seen.has(key)) { QUESTION_BANK[cat].push(q); seen.add(key); }
+    });
+  });
+}
+
+// Final cleanup pass: remove repeated questions so nothing shows up twice.
+//  - text questions: drop a repeated answer within a category, and any question
+//    whose exact text already appeared in another category.
+//  - image questions (flags) share a prompt but differ by answer, so de-dupe
+//    those by answer only.
+// Never empties a point tier (keeps the last survivor of a tier).
+(function dedupeBank() {
+  const seenGlobalQ = new Set();
+  Object.keys(QUESTION_BANK).forEach(cat => {
+    const seenAns = new Set();
+    const tierCount = {};
+    (QUESTION_BANK[cat] || []).forEach(q => { tierCount[q.points] = (tierCount[q.points] || 0) + 1; });
+    QUESTION_BANK[cat] = (QUESTION_BANK[cat] || []).filter(q => {
+      if (q.type === 'interactive') return true;
+      const aKey = (q.a == null ? '' : String(q.a)).toLowerCase().replace(/[^a-z0-9]/g, '');
+      const keepTier = () => (tierCount[q.points] || 0) > 1; // don't drop a tier's last item
+      if (q.type === 'image') {
+        if (aKey && seenAns.has('img:' + aKey) && keepTier()) { tierCount[q.points]--; return false; }
+        if (aKey) seenAns.add('img:' + aKey);
+        return true;
+      }
+      const qKey = (q.q || '').toLowerCase().replace(/\s+/g, ' ').trim();
+      const dupGlobal = qKey && seenGlobalQ.has(qKey);
+      const dupAns = aKey && seenAns.has(aKey);
+      if ((dupGlobal || dupAns) && keepTier()) { tierCount[q.points]--; return false; }
+      if (qKey) seenGlobalQ.add(qKey);
+      if (aKey) seenAns.add(aKey);
+      return true;
+    });
+  });
+})();
+
 // Sprinkle a few rapid-fire interactive challenges into fitting categories.
 if (QUESTION_BANK['Geography']) {
   QUESTION_BANK['Geography'].push(

@@ -2130,14 +2130,45 @@ textarea.input-field {
   display: block; margin: 14px 0 6px; font-size: 0.8rem; letter-spacing: 1px;
   text-transform: uppercase; color: rgba(255,215,0,0.7);
 }
-.bid-stepper { display: flex; align-items: center; gap: 16px; justify-content: center; }
+.bid-stepper { display: flex; align-items: center; gap: 16px; justify-content: center; flex-wrap: wrap; }
 .bid-stepper .btn { width: 48px; height: 48px; padding: 0; font-size: 1.4rem; border-radius: 50%; }
 .bid-value { font-family: var(--font-display); font-size: 2.2rem; color: var(--gold); min-width: 60px; text-align: center; }
+.bid-label { color: rgba(255,255,255,0.7); font-size: 0.95rem; }
 .bonus-attempter { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.bonus-attempter--wrap { flex-wrap: wrap; }
 .bonus-name-counter {
   font-family: var(--font-display); font-size: 2.6rem; color: var(--gold);
   text-align: center; margin: 14px 0;
 }
+
+/* Typed-answer input used in rapid-fire, name-as-many, and high-stakes rounds */
+.bonus-input {
+  display: block; width: 100%; margin: 8px 0 4px; text-align: center;
+  font-size: 1.15rem;
+}
+.bonus-input.shake { animation: shake 0.32s; border-color: #ff5d5d; }
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+.bonus-named-tags {
+  display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  margin: 6px 0 10px; min-height: 8px;
+}
+.named-tag {
+  background: rgba(255,215,0,0.14); border: 1px solid rgba(255,215,0,0.4);
+  color: var(--gold); border-radius: 999px; padding: 3px 10px; font-size: 0.82rem;
+}
+.typed-badge {
+  font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+  background: rgba(78,205,196,0.18); color: #76e4dd; border-radius: 6px; padding: 2px 7px; margin-left: 6px;
+}
+.typed-badge.muted { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+/* Family Feud: per-answer "who found it" credit buttons */
+.feud-credit { display: inline-flex; gap: 6px; margin-left: auto; }
+.feud-credit .btn { padding: 4px 10px; font-size: 0.78rem; }
 
 /* ===================== Add-your-own category ===================== */
 .add-own-btn { display: block; margin: 0 auto 18px; }

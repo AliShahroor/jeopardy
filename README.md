@@ -29,10 +29,22 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 - **2–4 players/teams**, scoreboard (teams show their members), turn tracking.
 - **💰 Steal** — when a player answers wrong, any other player can steal:
   answer correctly to take the points, or get it wrong and lose them.
-- **⚡ Bonus Rounds (lifeline)** — twice per game, optional, two modes:
-  *Rapid-Fire Trivia* (each contestant answers as many questions as they can in
-  30–60s) or *Name as Many* (pick a topic, bid how many you can name, then name
-  them before the clock runs out). Winner takes **+$250**.
+- **⚡ Bonus Rounds (lifeline)** — optional, configurable count per game. In team
+  games a **random player from each side** faces off. Bonus questions come from a
+  **separate bank** (`bonus-data.js`), so they never repeat the board. Four modes
+  with variable, risk/reward payouts:
+  - *⚡ Rapid-Fire* — take turns; **type each answer** (close spellings &
+    synonyms count via fuzzy matching). Every correct one banks **+$100**; you
+    keep what you earn.
+  - *📝 Name as Many* — pick a topic and play **Rate** (every *N* named banks
+    $*X*, e.g. every 10 countries = $100) or **Bid** (call a number → hit it for
+    **bid × $25**, miss → opponent gets $100). Supported topics (countries,
+    capitals, states, planets, elements, NBA teams) let you **type answers** that
+    auto-validate.
+  - *🎲 High Stakes* — double-or-nothing: a player wagers up to their score on one
+    question. Nail it → win the wager; miss → lose it.
+  - *👥 Family Feud* — reveal the survey answers and tap who called each; every
+    find banks **+$50** for that side.
 - **💾 Save / Load** — remembers the entire game: board, every score, whose
   turn it is, answered cells, timer, and bonus rounds left.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact
@@ -45,13 +57,15 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 
 | File | Purpose |
 |------|---------|
-| `index.html` | All screens (login, menu, setup, board, modals). Loads the data files in order: `jeopardy-data.js`, `jeopardy-extra.js`, `questions.js`, then `game.js`, `app.js`. |
+| `index.html` | All screens (login, menu, setup, board, modals). Loads the data files in order: `jeopardy-data.js`, `jeopardy-extra.js`, `bonus-data.js`, `enrich-data.js`, `questions.js`, then `game.js`, `app.js`. |
 | `style.css`  | All styling (dark/gold Jeopardy theme, responsive). |
-| `jeopardy-data.js` | `REAL_CATEGORIES` — the broad, curated direct-Q&A themes (General Knowledge, Movies & TV, etc.), 8 questions per point tier. Loaded **first**. |
-| `jeopardy-extra.js` | `EXTRA_QUESTIONS` (more questions for existing categories + a few new ones like Logos & Brands, TV Shows), plus `FAMILY_FEUD` survey data and `NAME_PROMPTS_EXTRA` for the bonus rounds. |
-| `questions.js` | Defines `QUESTION_BANK` (genre categories like Video Games, Anime, Flags) **and** runs the merge pipeline (see below), plus `CHALLENGE_ANSWERS` for the rapid-fire challenges. |
-| `game.js` | Game engine, local storage, sound, and particle systems. |
-| `app.js` | UI controller: screens, board rendering, the resolve/steal flow, bonus rounds, sharing, etc. |
+| `jeopardy-data.js` | `REAL_CATEGORIES` — the broad, curated direct-Q&A themes (General Knowledge, Movies & TV, etc.). Loaded **first**. |
+| `jeopardy-extra.js` | `EXTRA_QUESTIONS` (more questions for existing categories + a few new ones like Logos & Brands, TV Shows), plus `FAMILY_FEUD` survey data and `NAME_PROMPTS_EXTRA`. |
+| `bonus-data.js` | **Separate bonus content** so bonus rounds never reuse a board question: `RAPID_FIRE` (short Q&A with `accept` aliases), `NAME_SETS` (normalized acceptable-answer lists for typed "Name as Many"), and `NAME_PROMPT_KEY` (maps a prompt to its answer set). |
+| `enrich-data.js` | `ENRICH_QUESTIONS` — extra, difficulty-laddered questions that enrich the thinner genre categories (Video Games, Anime, Mythology, …). |
+| `questions.js` | Defines `QUESTION_BANK` (genre categories like Video Games, Anime, Flags) **and** runs the merge + de-dupe pipeline (see below), plus `CHALLENGE_ANSWERS` for the interactive challenges. |
+| `game.js` | Game engine, local storage, sound, particle systems, and the fuzzy answer matcher (`fuzzyAnswerMatch`, `matchNameSet`). |
+| `app.js` | UI controller: screens, board rendering, the resolve/steal flow, all four bonus modes, sharing, etc. |
 
 ### How the question bank is assembled
 
@@ -62,11 +76,16 @@ The playable bank is built in `questions.js` at load time, in this order:
    same-named categories from) `jeopardy-data.js`.
 3. **Filter:** every category **not** listed in `ACTIVE_CATEGORIES`
    (in `questions.js`) is deleted. This is the curated, user-visible set.
-4. Merge in `EXTRA_QUESTIONS` from `jeopardy-extra.js` (de-duped by question
-   text), then sprinkle in a few interactive rapid-fire challenges.
+4. Merge in `EXTRA_QUESTIONS` (`jeopardy-extra.js`) then `ENRICH_QUESTIONS`
+   (`enrich-data.js`), each de-duped by question text.
+5. **De-dupe pass:** drop any repeated answer within a category and any question
+   whose exact text already appeared in another category (flags de-dupe by
+   answer, since they share a prompt). A tier is never emptied.
+6. Sprinkle in a few interactive rapid-fire challenges.
 
 > Note: because of step 3, any category whose name is not in `ACTIVE_CATEGORIES`
-> never appears in a game.
+> never appears in a game. `RAPID_FIRE`/`NAME_SETS` (bonus content) are **not**
+> part of this board bank — that separation is intentional.
 
 ## Adding your own genre to the built-in bank
 

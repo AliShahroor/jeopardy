@@ -282,6 +282,69 @@ class JeopardyGame {
   }
 }
 
+// ---- Fuzzy answer matching (shared by bonus rapid-fire & name-as-many) ----
+// Normalize for comparison: lowercase, strip accents, drop punctuation and a
+// leading article, collapse whitespace.
+function normalizeAnswer(s) {
+  return String(s == null ? '' : s)
+    .toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // strip accents
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .replace(/\b(the|a|an)\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 0; i < a.length; i++) {
+    let cur = [i + 1];
+    for (let j = 0; j < b.length; j++) {
+      const cost = a[i] === b[j] ? 0 : 1;
+      cur[j + 1] = Math.min(prev[j + 1] + 1, cur[j] + 1, prev[j] + cost);
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// Does `input` match `correct` (or any of `accept` aliases), allowing for minor
+// typos? Longer answers tolerate more typos; very short answers must be exact.
+function fuzzyAnswerMatch(input, correct, accept) {
+  const ni = normalizeAnswer(input);
+  if (!ni) return false;
+  const candidates = [correct].concat(accept || []).map(normalizeAnswer).filter(Boolean);
+  for (const c of candidates) {
+    if (ni === c) return true;
+    if (ni.replace(/ /g, '') === c.replace(/ /g, '')) return true; // spacing
+    const tol = c.length >= 8 ? 2 : (c.length >= 5 ? 1 : 0);
+    if (tol && levenshtein(ni, c) <= tol) return true;
+  }
+  return false;
+}
+
+// Match a typed entry against a "name as many" answer set (array of already-
+// normalized acceptable strings). Returns the matched canonical entry or null.
+function matchNameSet(input, normalizedSet) {
+  const ni = normalizeAnswer(input);
+  if (!ni || !Array.isArray(normalizedSet)) return null;
+  if (normalizedSet.includes(ni)) return ni;
+  for (const c of normalizedSet) {
+    if (c.length >= 6 && levenshtein(ni, c) <= 1) return c;
+  }
+  return null;
+}
+
+if (typeof window !== 'undefined') {
+  window.normalizeAnswer = normalizeAnswer;
+  window.fuzzyAnswerMatch = fuzzyAnswerMatch;
+  window.matchNameSet = matchNameSet;
+}
+
 // Save/Load manager using localStorage
 class GameStorage {
   constructor() {
