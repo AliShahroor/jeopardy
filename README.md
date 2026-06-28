@@ -28,7 +28,8 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
   random teams**.
 - **2–4 players/teams**, scoreboard (teams show their members), turn tracking.
 - **💰 Steal** — when a player answers wrong, any other player can steal:
-  answer correctly to take the points, or get it wrong and lose them.
+  tap whoever answers correctly to give them the points. Wrong answers never
+  deduct points.
 - **⚡ Bonus Rounds (lifeline)** — optional, configurable count per game. In team
   games a **random player from each side** faces off. Bonus questions come from a
   **separate bank** (`bonus-data.js`), so they never repeat the board. Four modes
@@ -41,10 +42,8 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
     **bid × $25**, miss → opponent gets $100). Supported topics (countries,
     capitals, states, planets, elements, NBA teams) let you **type answers** that
     auto-validate.
-  - *🎲 High Stakes* — double-or-nothing: a player wagers up to their score on one
-    question. Nail it → win the wager; miss → lose it.
-  - *👥 Family Feud* — reveal the survey answers and tap who called each; every
-    find banks **+$50** for that side.
+  - *👥 Family Feud* — reveal the survey answers and tap who called each; **ranked
+    scoring**, so the #1 answer is worth **$700** down to **$100** for the last.
 - **💾 Save / Load** — remembers the entire game: board, every score, whose
   turn it is, answered cells, timer, and bonus rounds left.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact

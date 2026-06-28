@@ -2166,9 +2166,12 @@ textarea.input-field {
   background: rgba(78,205,196,0.18); color: #76e4dd; border-radius: 6px; padding: 2px 7px; margin-left: 6px;
 }
 .typed-badge.muted { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
-/* Family Feud: per-answer "who found it" credit buttons */
+/* Family Feud: per-answer "who found it" credit buttons + ranked values */
 .feud-credit { display: inline-flex; gap: 6px; margin-left: auto; }
 .feud-credit .btn { padding: 4px 10px; font-size: 0.78rem; }
+.feud-text { flex: 1; }
+.feud-worth { color: var(--gold); font-weight: 700; opacity: 0.75; margin-left: 4px; }
+.feud-value { font-family: var(--font-display); font-weight: 700; color: var(--dark); margin-left: auto; }
 
 /* ===================== Add-your-own category ===================== */
 .add-own-btn { display: block; margin: 0 auto 18px; }

@@ -504,33 +504,32 @@ if (typeof ENRICH_QUESTIONS !== 'undefined') {
   });
 }
 
-// Final cleanup pass: remove repeated questions so nothing shows up twice.
-//  - text questions: drop a repeated answer within a category, and any question
-//    whose exact text already appeared in another category.
+// Final cleanup pass: drop only EXACT repeated questions, so nothing identical
+// shows up twice — but paraphrased questions (same fact asked a different way)
+// are kept on purpose for variety. Per-game answer collisions are avoided later
+// at board-build time (buildGameBoard), not here.
+//  - text questions: drop any whose normalized text already appeared (anywhere).
 //  - image questions (flags) share a prompt but differ by answer, so de-dupe
 //    those by answer only.
 // Never empties a point tier (keeps the last survivor of a tier).
 (function dedupeBank() {
   const seenGlobalQ = new Set();
   Object.keys(QUESTION_BANK).forEach(cat => {
-    const seenAns = new Set();
+    const seenImg = new Set();
     const tierCount = {};
     (QUESTION_BANK[cat] || []).forEach(q => { tierCount[q.points] = (tierCount[q.points] || 0) + 1; });
     QUESTION_BANK[cat] = (QUESTION_BANK[cat] || []).filter(q => {
       if (q.type === 'interactive') return true;
-      const aKey = (q.a == null ? '' : String(q.a)).toLowerCase().replace(/[^a-z0-9]/g, '');
       const keepTier = () => (tierCount[q.points] || 0) > 1; // don't drop a tier's last item
       if (q.type === 'image') {
-        if (aKey && seenAns.has('img:' + aKey) && keepTier()) { tierCount[q.points]--; return false; }
-        if (aKey) seenAns.add('img:' + aKey);
+        const aKey = (q.a == null ? '' : String(q.a)).toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (aKey && seenImg.has(aKey) && keepTier()) { tierCount[q.points]--; return false; }
+        if (aKey) seenImg.add(aKey);
         return true;
       }
-      const qKey = (q.q || '').toLowerCase().replace(/\s+/g, ' ').trim();
-      const dupGlobal = qKey && seenGlobalQ.has(qKey);
-      const dupAns = aKey && seenAns.has(aKey);
-      if ((dupGlobal || dupAns) && keepTier()) { tierCount[q.points]--; return false; }
+      const qKey = (q.q || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      if (qKey && seenGlobalQ.has(qKey) && keepTier()) { tierCount[q.points]--; return false; }
       if (qKey) seenGlobalQ.add(qKey);
-      if (aKey) seenAns.add(aKey);
       return true;
     });
   });
@@ -634,11 +633,20 @@ function buildGameBoard(selectedCategories) {
   const board = {};
   const pointValues = [200, 400, 600, 800, 1000];
 
+  const ansKey = a => (a == null ? '' : String(a)).toLowerCase().replace(/[^a-z0-9]/g, '');
   selectedCategories.forEach(category => {
     board[category] = [];
+    const usedAns = new Set(); // keep one game's board free of repeated answers
     pointValues.forEach(points => {
-      const question = getRandomQuestion(category, points);
+      let question = getRandomQuestion(category, points);
+      // Re-roll a few times to avoid the same answer appearing twice this game.
+      let tries = 0;
+      while (question && question.a && usedAns.has(ansKey(question.a)) && tries < 8) {
+        question = getRandomQuestion(category, points);
+        tries++;
+      }
       if (question) {
+        if (question.a) usedAns.add(ansKey(question.a));
         board[category].push({ ...question });
       } else {
         // Fallback: pick any question from the category and adjust points

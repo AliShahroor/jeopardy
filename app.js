@@ -1277,7 +1277,7 @@
     const turnPlayer = game.players[game.currentPlayerIndex];
     controls.innerHTML = `
       ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up — anyone can steal now!</p>' : ''}
-      <p class="judge-target">Did <strong style="color:${turnPlayer.color}">${escapeHtml(turnPlayer.name)}</strong> answer correctly? <span class="judge-pts">(&plusmn;$${question.points})</span></p>
+      <p class="judge-target">Did <strong style="color:${turnPlayer.color}">${escapeHtml(turnPlayer.name)}</strong> answer correctly? <span class="judge-pts">(+$${question.points})</span></p>
       <div class="judge-buttons">
         <button class="btn btn-success" onclick="window.app.awardTurn(true)">&#10003; Correct (+$${question.points})</button>
         <button class="btn btn-danger" onclick="window.app.awardTurn(false)">&#10007; Wrong / no answer</button>
@@ -1315,14 +1315,12 @@
       .filter(o => o.i !== game.currentPlayerIndex);
     controls.innerHTML = `
       ${timedOut ? '<p class="times-up-note">&#9200; Time\'s up — open for a steal!</p>' : ''}
-      <p class="judge-target">&#128176; Steal! Tap a player, then mark their attempt. <span class="judge-pts">(correct +$${question.points} &middot; wrong &minus;$${question.points})</span></p>
+      <p class="judge-target">&#128176; Steal! Tap whoever got it right. <span class="judge-pts">(+$${question.points})</span></p>
       <div class="resolve-players">
         ${stealers.map(o => `
-          <div class="steal-row" style="display:flex; gap:8px; align-items:center; justify-content:center; margin-bottom:8px; flex-wrap:wrap;">
-            <span class="resolve-btn" style="border-color: ${o.p.color}; color: ${o.p.color}; cursor:default;">${escapeHtml(o.p.name)}</span>
-            <button class="btn btn-success btn-small" onclick="window.app.resolveSteal(${o.i}, true)">&#10003; +$${question.points}</button>
-            <button class="btn btn-danger btn-small" onclick="window.app.resolveSteal(${o.i}, false)">&#10007; &minus;$${question.points}</button>
-          </div>`).join('')}
+          <button class="resolve-btn" style="border-color: ${o.p.color}; color: ${o.p.color}" onclick="window.app.resolveSteal(${o.i})">
+            &#10003; ${escapeHtml(o.p.name)} &nbsp;+$${question.points}
+          </button>`).join('')}
       </div>
       <div class="judge-buttons" style="margin-top: 12px;">
         <button class="btn btn-danger" onclick="window.app.noOneGotIt()">&#10007; No one got it</button>
@@ -1331,28 +1329,15 @@
     `;
   }
 
-  // Resolve a steal attempt: correct adds points, wrong DEDUCTS them.
-  function resolveSteal(index, isCorrect) {
+  // Resolve a steal: the chosen player got it right (+points). Wrong answers
+  // never deduct — the host just taps "No one got it" to move on.
+  function resolveSteal(index) {
     const question = game.currentQuestion;
     if (!question) return;
     game.stopTimer();
-    if (isCorrect) {
-      applyAward(index, question.points);
-      celebrateAward();
-      setTimeout(finishQuestion, 1100);
-    } else {
-      applyAward(index, -question.points);
-      sound.playWrong();
-      const modal = document.getElementById('question-modal');
-      if (modal) { modal.classList.remove('flash-correct'); modal.classList.add('flash-wrong'); }
-      // Wrong steal resolved — keep the panel open so another player can still
-      // try (or the host can close it out via "No one got it").
-      setTimeout(() => {
-        const modal2 = document.getElementById('question-modal');
-        if (modal2) modal2.classList.remove('flash-wrong');
-        renderStealPanel(false);
-      }, 700);
-    }
+    applyAward(index, question.points);
+    celebrateAward();
+    setTimeout(finishQuestion, 1100);
   }
 
   // Apply a score change and remember it so it can be undone with one tap.
@@ -2032,7 +2017,7 @@
       <div class="bonus-mode-toggle">
         <button class="team-mode-btn ${mode === 'trivia' ? 'selected' : ''}" onclick="window.app.setBonusMode('trivia')">&#9889; Rapid-Fire</button>
         <button class="team-mode-btn ${isName ? 'selected' : ''}" onclick="window.app.setBonusMode('name')">&#128221; Name as Many</button>
-        <button class="team-mode-btn ${isWager ? 'selected' : ''}" onclick="window.app.setBonusMode('wager')">&#127920; High Stakes</button>
+        <!-- High Stakes (double-or-nothing) temporarily disabled — questions need work. -->
         <button class="team-mode-btn ${isFeud ? 'selected' : ''}" onclick="window.app.setBonusMode('feud')">&#128101; Family Feud</button>
       </div>`;
 
@@ -2561,12 +2546,12 @@
     }
   }
 
-  // ---- Bonus: Family Feud (each answer a side finds banks +$50) ----
+  // ---- Bonus: Family Feud (RANKED: top answer = $700, down to $100) ----
   function startBonusFeud() {
     if (bonusState.a === bonusState.b) { showToast('Pick two different sides', 'error'); return; }
     if (typeof FAMILY_FEUD === 'undefined' || !FAMILY_FEUD[bonusState.feudIndex]) return;
     bonusState.feudRevealed = {};
-    bonusState.feudFound = { a: 0, b: 0 };
+    bonusState.feudSide = 'a';
     sound.playBoardReveal();
     renderBonusFeudPlay();
   }
@@ -2580,51 +2565,112 @@
     return team.name;
   }
 
+  // Ranked value for the answer at index i out of `total`: the #1 answer is
+  // worth $700, the last $100, evenly spaced and rounded to the nearest $50.
+  function feudValue(i, total) {
+    if (total <= 1) return 700;
+    return Math.round((700 - (600 * i) / (total - 1)) / 50) * 50;
+  }
+  function feudTotals() {
+    const f = FAMILY_FEUD[bonusState.feudIndex];
+    const t = { a: 0, b: 0 };
+    f.answers.forEach((_, i) => { const w = bonusState.feudRevealed[i]; if (w) t[w] += feudValue(i, f.answers.length); });
+    return t;
+  }
+
   function renderBonusFeudPlay() {
     const m = document.getElementById('bonus-modal');
     const f = FAMILY_FEUD[bonusState.feudIndex];
+    const total = f.answers.length;
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
     const nameA = escapeHtml(contestantNameOnly('a')), nameB = escapeHtml(contestantNameOnly('b'));
+    const side = bonusState.feudSide || 'a';
     const slots = f.answers.map((ans, i) => {
+      const val = feudValue(i, total);
       const who = bonusState.feudRevealed[i];
       if (who) {
-        const p = who === 'a' ? A : B;
+        const p = who === 'a' ? A : (who === 'b' ? B : null);
+        const credit = p ? ` <small style="color:${p.color}">(${who === 'a' ? nameA : nameB})</small>` : '';
         return `<div class="feud-slot revealed">
-          <span class="feud-rank" style="background:${p.color}">${i + 1}</span>
-          <span class="feud-text">${escapeHtml(ans)} <small style="color:${p.color}">(${who === 'a' ? nameA : nameB})</small></span>
+          <span class="feud-rank"${p ? ` style="background:${p.color}"` : ''}>${i + 1}</span>
+          <span class="feud-text">${escapeHtml(ans)}${credit}</span>
+          <span class="feud-value">$${val}</span>
         </div>`;
       }
       return `<div class="feud-slot">
         <span class="feud-rank">${i + 1}</span>
-        <span class="feud-text">&middot; &middot; &middot;</span>
-        <span class="feud-credit">
-          <button class="btn btn-small" style="border-color:${A.color};color:${A.color}" onclick="window.app.revealFeudAnswer(${i},'a')">${nameA}</button>
-          <button class="btn btn-small" style="border-color:${B.color};color:${B.color}" onclick="window.app.revealFeudAnswer(${i},'b')">${nameB}</button>
-        </span>
+        <span class="feud-text">&middot; &middot; &middot; <small class="feud-worth">$${val}</small></span>
       </div>`;
     }).join('');
+    const tot = feudTotals();
     m.innerHTML = `
       <span class="bonus-icon">&#128101;</span>
       <h2 class="bonus-title">Family Feud</h2>
       <p class="bonus-feud-q">${escapeHtml(f.prompt)}</p>
-      <p class="bonus-desc">Reveal each answer and tap the side that called it. Each find = <strong>+$50</strong>.</p>
+      <p class="bonus-desc">A side calls an answer &mdash; pick who's guessing, type it, and matches reveal automatically. <strong>#1 = $700</strong> down to <strong>$100</strong>.</p>
+      <div class="bonus-attempter" style="margin-bottom:10px;">
+        <button class="team-mode-btn ${side === 'a' ? 'selected' : ''}" style="border-color:${A.color}" onclick="window.app.feudSetSide('a')">${nameA}</button>
+        <button class="team-mode-btn ${side === 'b' ? 'selected' : ''}" style="border-color:${B.color}" onclick="window.app.feudSetSide('b')">${nameB}</button>
+      </div>
+      <input type="text" id="feud-input" class="input-field bonus-input" autocomplete="off" placeholder="Type the answer they said &amp; press Enter…" onkeydown="if(event.key==='Enter'){event.preventDefault();window.app.feudGuess();}">
       <div class="feud-board">${slots}</div>
-      <p class="bonus-field-label" style="text-align:center">${nameA}: <strong>${bonusState.feudFound.a}</strong> &nbsp;&middot;&nbsp; ${nameB}: <strong>${bonusState.feudFound.b}</strong></p>
+      <p class="bonus-field-label" style="text-align:center">${nameA}: <strong>$${tot.a}</strong> &nbsp;&middot;&nbsp; ${nameB}: <strong>$${tot.b}</strong></p>
       <div class="judge-buttons" style="margin-top:12px;">
+        <button class="btn btn-secondary" onclick="window.app.feudRevealRest()">Reveal the rest</button>
         <button class="btn btn-primary btn-large" onclick="window.app.finishFeud()">Finish &amp; Award</button>
       </div>`;
+    const inp = document.getElementById('feud-input');
+    if (inp) inp.focus();
+  }
+
+  function feudSetSide(side) {
+    bonusState.feudSide = side;
+    sound.playClick();
+    renderBonusFeudPlay();
+  }
+
+  // Type what a side called out; fuzzy-match it to a hidden answer and reveal it.
+  function feudGuess() {
+    const inp = document.getElementById('feud-input');
+    if (!inp) return;
+    const val = inp.value.trim();
+    if (!val) return;
+    const f = FAMILY_FEUD[bonusState.feudIndex];
+    let hit = -1;
+    for (let i = 0; i < f.answers.length; i++) {
+      if (bonusState.feudRevealed[i]) continue;
+      if (window.fuzzyAnswerMatch(val, f.answers[i], [])) { hit = i; break; }
+    }
+    if (hit === -1) {
+      inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');
+      if (sound.playWrong) sound.playWrong();
+      inp.value = '';
+      inp.focus();
+      return;
+    }
+    bonusState.feudRevealed[hit] = bonusState.feudSide || 'a';
+    sound.playChallengeCorrect();
+    renderBonusFeudPlay();
+  }
+
+  // Reveal any answers nobody found (no points credited).
+  function feudRevealRest() {
+    const f = FAMILY_FEUD[bonusState.feudIndex];
+    f.answers.forEach((_, i) => { if (!bonusState.feudRevealed[i]) bonusState.feudRevealed[i] = 'none'; });
+    sound.playBoardReveal();
+    renderBonusFeudPlay();
   }
 
   function revealFeudAnswer(i, side) {
     if (bonusState.feudRevealed[i]) return;
     bonusState.feudRevealed[i] = side;
-    bonusState.feudFound[side] = (bonusState.feudFound[side] || 0) + 1;
     sound.playChallengeCorrect();
     renderBonusFeudPlay();
   }
 
   function finishFeud() {
-    const aPay = bonusState.feudFound.a * 50, bPay = bonusState.feudFound.b * 50;
+    const tot = feudTotals();
+    const aPay = tot.a, bPay = tot.b;
     if (aPay > 0) game.adjustScore(bonusState.a, aPay);
     if (bPay > 0) game.adjustScore(bonusState.b, bPay);
     if (game.bonusLifelines > 0) game.bonusLifelines--;
@@ -2636,8 +2682,8 @@
       <span class="bonus-icon">&#127942;</span>
       <h2 class="bonus-title">Feud Results</h2>
       <div class="bonus-final">
-        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(contestantNameOnly('a'))}</span><strong>${bonusState.feudFound.a} found &middot; +$${aPay}</strong></div>
-        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(contestantNameOnly('b'))}</span><strong>${bonusState.feudFound.b} found &middot; +$${bPay}</strong></div>
+        <div class="bonus-final-row" style="border-color:${A.color}"><span style="color:${A.color}">${escapeHtml(contestantNameOnly('a'))}</span><strong>+$${aPay}</strong></div>
+        <div class="bonus-final-row" style="border-color:${B.color}"><span style="color:${B.color}">${escapeHtml(contestantNameOnly('b'))}</span><strong>+$${bPay}</strong></div>
       </div>
       <button class="btn btn-primary btn-large" onclick="window.app.closeBonus()">Back to Game</button>`;
     if (aPay > 0 || bPay > 0) {
@@ -2864,6 +2910,9 @@
     wagerSubmit,
     wagerGiveUp,
     revealFeudAnswer,
+    feudSetSide,
+    feudGuess,
+    feudRevealRest,
     finishFeud,
     beginBonusTurn,
     bonusPeek,
