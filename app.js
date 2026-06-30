@@ -1090,7 +1090,9 @@
     const content = document.getElementById('modal-content');
     let imageHtml = '';
 
-    if (question.emoji) {
+    if (question.image) {
+      imageHtml = `<img class="question-image question-image--asset" src="${escapeHtml(question.image)}" alt="${escapeHtml(question.imageAlt || question.q || 'Question image')}" loading="lazy">`;
+    } else if (question.emoji) {
       // Direct glyph (e.g. a flag emoji, which renders as a real flag on most devices)
       imageHtml = `<div class="question-image question-image--glyph">${question.emoji}</div>`;
     } else if (question.imageType === 'emoji_map') {

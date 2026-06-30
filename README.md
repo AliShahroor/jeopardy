@@ -67,6 +67,7 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 | `questions.js` | Defines `QUESTION_BANK` (genre categories like Video Games, Anime, Flags) **and** runs the merge + de-dupe pipeline (see below), plus `CHALLENGE_ANSWERS` for the interactive challenges. |
 | `game.js` | Game engine, local storage, sound, particle systems, and the fuzzy answer matcher (`fuzzyAnswerMatch`, `matchNameSet`). |
 | `app.js` | UI controller: screens, board rendering, the resolve/steal flow, all four bonus modes, sharing, etc. |
+| `assets/images/` | Local visual assets used by image questions. The starter pack includes a few lightweight landmark SVGs. |
 
 ### How the question bank is assembled
 
@@ -103,6 +104,26 @@ Open `questions.js` and add a new key to `QUESTION_BANK`:
 `questions.js` — otherwise the merge pipeline (step 3 above) filters it out and
 it will never show up on the board. Optionally add an icon for it in
 `app.js` → `CATEGORY_ICONS`.
+
+### Adding image and audio-style questions
+
+Image questions can point at local assets:
+
+```js
+{
+  q: "What famous Paris landmark is shown in this image?",
+  a: "The Eiffel Tower",
+  points: 200,
+  type: "image",
+  image: "assets/images/landmarks/eiffel-tower.svg",
+  imageAlt: "Stylized Eiffel Tower silhouette",
+  accept: ["Eiffel Tower"]
+}
+```
+
+For audio, use a future `assets/audio/` folder and keep clips copyright-safe
+before adding an `audio` question type. Public-domain recordings, self-made
+clips, or licensed/generated snippets are safest for a public site.
 
 ## Content QA checklist
 

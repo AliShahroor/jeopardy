@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-labelledby="title desc">
+  <title id="title">Petra treasury facade</title>
+  <desc id="desc">A stylized rose-red rock facade inspired by Petra.</desc>
+  <rect width="640" height="420" fill="#24324a"/>
+  <path d="M0 90c70-44 122 6 188-28 70-36 118 18 194-4 86-25 152 8 258-20v382H0z" fill="#8e4a3d"/>
+  <path d="M70 142c48 18 78-24 132-6 62 20 100-18 154 4 68 28 118-16 214 8v272H70z" fill="#b7654d"/>
+  <path d="M190 310h260v56H190z" fill="#d08b65"/>
+  <path d="M218 190h204v120H218z" fill="#d99a72"/>
+  <path d="M240 184h160l-80-54z" fill="#e4b184"/>
+  <path d="M268 130h104l-52-44z" fill="#e0a579"/>
+  <path d="M238 214h24v96h-24zM294 214h24v96h-24zM350 214h24v96h-24zM406 214h24v96h-24z" fill="#7c3b34"/>
+  <path d="M286 310c0-34 16-58 34-58s34 24 34 58v56h-68z" fill="#24324a"/>
+  <path d="M204 366h232" stroke="#6b332f" stroke-width="16" stroke-linecap="round"/>
+</svg>

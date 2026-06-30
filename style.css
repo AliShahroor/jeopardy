@@ -1207,6 +1207,15 @@ textarea.input-field {
   border: 2px solid rgba(255, 215, 0, 0.2);
 }
 
+.question-image--asset {
+  display: block;
+  width: min(100%, 520px);
+  max-height: 300px;
+  object-fit: contain;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.24);
+}
+
 /* Large single glyph (e.g. a flag emoji shown as the image) */
 .question-image--glyph {
   font-size: 8rem;

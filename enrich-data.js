@@ -5232,6 +5232,49 @@ const ENRICH_QUESTIONS = {
     "a": "Ephesus",
     "points": 1000,
     "type": "text"
+   },
+   {
+    "q": "What famous Paris landmark is shown in this image?",
+    "a": "The Eiffel Tower",
+    "points": 200,
+    "type": "image",
+    "image": "assets/images/landmarks/eiffel-tower.svg",
+    "imageAlt": "Stylized Eiffel Tower silhouette",
+    "accept": [
+     "Eiffel Tower"
+    ]
+   },
+   {
+    "q": "These ancient pyramids are located near which Egyptian city?",
+    "a": "Giza",
+    "points": 400,
+    "type": "image",
+    "image": "assets/images/landmarks/giza-pyramids.svg",
+    "imageAlt": "Stylized pyramids of Giza"
+   },
+   {
+    "q": "In which city is this ancient amphitheater located?",
+    "a": "Rome",
+    "points": 600,
+    "type": "image",
+    "image": "assets/images/landmarks/colosseum.svg",
+    "imageAlt": "Stylized Colosseum"
+   },
+   {
+    "q": "This white marble mausoleum is located in which Indian city?",
+    "a": "Agra",
+    "points": 800,
+    "type": "image",
+    "image": "assets/images/landmarks/taj-mahal.svg",
+    "imageAlt": "Stylized Taj Mahal"
+   },
+   {
+    "q": "This rock-cut treasury facade is part of which ancient city in Jordan?",
+    "a": "Petra",
+    "points": 1000,
+    "type": "image",
+    "image": "assets/images/landmarks/petra.svg",
+    "imageAlt": "Stylized Petra treasury facade"
    }
   ],
   "Technology & Inventions": [
