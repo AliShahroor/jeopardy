@@ -2629,6 +2629,46 @@
     renderBonusFeudPlay();
   }
 
+  const FEUD_ACCEPT = {
+    'cleaning the bathroom': [
+      'clean bathroom', 'clean the bathroom', 'bathroom', 'washroom',
+      'cleaning the washroom', 'clean washroom', 'clean the washroom',
+      'restroom', 'cleaning the restroom', 'clean restroom', 'clean the restroom',
+      'toilet', 'cleaning the toilet', 'clean toilet', 'clean the toilet'
+    ],
+    'taking out trash': [
+      'take out trash', 'take out the trash', 'taking out the trash',
+      'trash', 'garbage', 'taking out garbage', 'taking out the garbage',
+      'take out garbage', 'take out the garbage'
+    ],
+    'brush teeth': ['brushing teeth', 'brush my teeth', 'brush your teeth', 'tooth brushing'],
+    'check phone': ['checking phone', 'check my phone', 'look at phone', 'look at my phone'],
+    'drink coffee': ['coffee', 'have coffee', 'drinking coffee'],
+    'eat breakfast': ['breakfast', 'have breakfast', 'eating breakfast'],
+    'hit snooze': ['snooze', 'snooze alarm', 'hit the snooze button'],
+    'ice cream cone': ['ice cream', 'icecream cone'],
+    'beach ball': ['ball'],
+    'watch tv': ['watch television', 'television', 'tv'],
+    'take a nap': ['nap', 'sleep', 'sleeping'],
+    'read a book': ['read', 'reading', 'book'],
+    'take a bath': ['bath', 'bathe'],
+    'go for a walk': ['walk', 'walking'],
+    'listen to music': ['music', 'listening to music'],
+    'have a snack': ['snack', 'eat a snack'],
+    'bad weather': ['weather'],
+    'car trouble': ['car problems', 'car broke down'],
+    'long coffee line': ['coffee line', 'line at coffee shop'],
+    'water bottle': ['water', 'bottle'],
+    'mowing the lawn': ['mow lawn', 'mow the lawn', 'cut grass', 'cutting grass'],
+    'chocolate syrup': ['chocolate sauce'],
+    'whipped cream': ['whip cream'],
+    'hot fudge': ['fudge']
+  };
+
+  function feudAccepts(answer) {
+    return FEUD_ACCEPT[window.normalizeAnswer(answer)] || [];
+  }
+
   // Type what a side called out; fuzzy-match it to a hidden answer and reveal it.
   function feudGuess() {
     const inp = document.getElementById('feud-input');
@@ -2639,7 +2679,7 @@
     let hit = -1;
     for (let i = 0; i < f.answers.length; i++) {
       if (bonusState.feudRevealed[i]) continue;
-      if (window.fuzzyAnswerMatch(val, f.answers[i], [])) { hit = i; break; }
+      if (window.fuzzyAnswerMatch(val, f.answers[i], feudAccepts(f.answers[i]))) { hit = i; break; }
     }
     if (hit === -1) {
       inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake');

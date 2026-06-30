@@ -297,7 +297,7 @@ const QUESTION_BANK = {
     { q: "This English stadium in London is the national football venue, known for its iconic arch.", a: "Wembley Stadium", points: 400, type: "text" },
     { q: "This term describes a player scoring three goals in a single match.", a: "Hat-trick", points: 400, type: "text" },
     { q: "This German city's club Bayern is one of the most successful teams in Europe.", a: "Munich", points: 600, type: "text" },
-    { q: "This Italian goalkeeper captained Italy to victory at the 2006 World Cup.", a: "Gianluigi Buffon", points: 600, type: "text" },
+    { q: "This Italian goalkeeper was part of Italy's 2006 World Cup-winning team.", a: "Gianluigi Buffon", points: 600, type: "text" },
     { q: "This French striker scored a hat-trick in the 2022 World Cup final yet finished on the losing side.", a: "Kylian Mbappe", points: 600, type: "text" },
     { q: "This annual award, given by France Football, honors the world's best player with a golden trophy.", a: "Ballon d'Or", points: 600, type: "text" },
     { q: "This Dutch total-football icon gave his name to a famous turn move.", a: "Johan Cruyff", points: 600, type: "text" },

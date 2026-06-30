@@ -44,6 +44,8 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
     auto-validate.
   - *👥 Family Feud* — reveal the survey answers and tap who called each; **ranked
     scoring**, so the #1 answer is worth **$700** down to **$100** for the last.
+    Typed guesses accept close spelling and natural phrasing variants such as
+    "washroom" for "bathroom" or "garbage" for "trash".
 - **💾 Save / Load** — remembers the entire game: board, every score, whose
   turn it is, answered cells, timer, and bonus rounds left.
 - **🔗 Share** — turn any game into a link. Anyone who opens it plays your exact
@@ -101,6 +103,22 @@ Open `questions.js` and add a new key to `QUESTION_BANK`:
 `questions.js` — otherwise the merge pipeline (step 3 above) filters it out and
 it will never show up on the board. Optionally add an icon for it in
 `app.js` → `CATEGORY_ICONS`.
+
+## Content QA checklist
+
+Before adding or merging a new question batch:
+
+- Cross-check roles and labels in the clue, especially sports positions,
+  nationalities, dates, titles, and "first/most/only" claims.
+- Add `accept` aliases for common alternate spellings, surnames, abbreviations,
+  and harmless wording variants.
+- For Family Feud answers, add natural synonym variants in `app.js` →
+  `FEUD_ACCEPT` when the survey wording is strict but players may say the same
+  idea differently.
+- Avoid ambiguous answers unless the clue explicitly says "name one" or lists
+  all acceptable answers.
+- Run `node --check` on each edited JavaScript file after data edits to catch
+  syntax errors before pushing.
 
 ## Note on "AI generates any genre"
 

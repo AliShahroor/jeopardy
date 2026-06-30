@@ -987,7 +987,7 @@ const ENRICH_QUESTIONS = {
     "type": "text"
    },
    {
-    "q": "Which French striker, who joined Real Madrid in 2009, is the all-time leading goalscorer in the men's UEFA Champions League?",
+    "q": "Which Portuguese forward, who joined Real Madrid in 2009, is the all-time leading goalscorer in the men's UEFA Champions League?",
     "a": "Cristiano Ronaldo",
     "points": 200,
     "type": "text"
@@ -1060,7 +1060,7 @@ const ENRICH_QUESTIONS = {
     "type": "text"
    },
    {
-    "q": "Which Italian goalkeeper, regarded as one of the best ever, captained Italy to the 2006 World Cup title?",
+    "q": "Which Italian goalkeeper, regarded as one of the best ever, was part of Italy's 2006 World Cup-winning team?",
     "a": "Gianluigi Buffon",
     "points": 600,
     "type": "text",
@@ -1079,12 +1079,12 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Welsh forward set the record for the fastest hat-trick in English league history, scoring three goals in under three minutes for Tottenham in 2004?",
-    "a": "Robbie Keane",
+    "q": "Which Senegalese forward set the Premier League record for the fastest hat-trick, scoring three goals in under three minutes for Southampton in 2015?",
+    "a": "Sadio Mane",
     "points": 600,
     "type": "text",
     "accept": [
-     "Sadio Mane"
+     "Mane"
     ]
    },
    {
@@ -1107,7 +1107,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which French defender scored the golden goal that won Euro 2000 for France in extra time?",
+    "q": "Which French striker scored the golden goal that won Euro 2000 for France in extra time?",
     "a": "David Trezeguet",
     "points": 800,
     "type": "text",
@@ -1137,7 +1137,7 @@ const ENRICH_QUESTIONS = {
     "type": "text"
    },
    {
-    "q": "Which French midfielder, born in 1972, captained the 1998 World Cup winners and later coached Real Madrid to three Champions League titles?",
+    "q": "Which French midfielder, born in 1972, scored twice in the 1998 World Cup final and later coached Real Madrid to three Champions League titles?",
     "a": "Zinedine Zidane",
     "points": 1000,
     "type": "text",
@@ -2530,6 +2530,42 @@ const ENRICH_QUESTIONS = {
     "a": "Astatine",
     "points": 1000,
     "type": "text"
+   },
+   {
+    "q": "What color is made by mixing red and blue paint?",
+    "a": "Purple",
+    "points": 200,
+    "type": "text",
+    "accept": [
+     "Violet"
+    ]
+   },
+   {
+    "q": "What is the world's largest ocean?",
+    "a": "The Pacific Ocean",
+    "points": 400,
+    "type": "text",
+    "accept": [
+     "Pacific"
+    ]
+   },
+   {
+    "q": "Which Scottish economist wrote The Wealth of Nations?",
+    "a": "Adam Smith",
+    "points": 600,
+    "type": "text"
+   },
+   {
+    "q": "Which ancient Egyptian city was home to a legendary library and lighthouse?",
+    "a": "Alexandria",
+    "points": 800,
+    "type": "text"
+   },
+   {
+    "q": "What Greek-derived word means a word or phrase that reads the same backward and forward?",
+    "a": "Palindrome",
+    "points": 1000,
+    "type": "text"
    }
   ],
   "Geography": [
@@ -3015,6 +3051,47 @@ const ENRICH_QUESTIONS = {
     "a": "Spin",
     "points": 1000,
     "type": "text"
+   },
+   {
+    "q": "What molecule has the chemical formula H2O?",
+    "a": "Water",
+    "points": 200,
+    "type": "text"
+   },
+   {
+    "q": "Which planet has a giant storm known as the Great Red Spot?",
+    "a": "Jupiter",
+    "points": 400,
+    "type": "text"
+   },
+   {
+    "q": "What scale is used to measure how acidic or basic a solution is?",
+    "a": "The pH scale",
+    "points": 600,
+    "type": "text",
+    "accept": [
+     "pH"
+    ]
+   },
+   {
+    "q": "Which astronomer formulated the three laws of planetary motion?",
+    "a": "Johannes Kepler",
+    "points": 800,
+    "type": "text",
+    "accept": [
+     "Kepler"
+    ]
+   },
+   {
+    "q": "Which two scientists shared the 2020 Nobel Prize in Chemistry for developing CRISPR-Cas9 genome editing?",
+    "a": "Emmanuelle Charpentier and Jennifer Doudna",
+    "points": 1000,
+    "type": "text",
+    "accept": [
+     "Charpentier and Doudna",
+     "Jennifer Doudna and Emmanuelle Charpentier",
+     "Doudna and Charpentier"
+    ]
    }
   ],
   "Sports": [
