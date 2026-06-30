@@ -1079,7 +1079,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Senegalese forward set the Premier League record for the fastest hat-trick, scoring three goals in under three minutes for Southampton in 2015?",
+    "q": "Who set the Premier League record for the fastest hat-trick, scoring three goals in 2 minutes 56 seconds in 2015?",
     "a": "Sadio Mane",
     "points": 600,
     "type": "text",
@@ -1088,7 +1088,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Spanish midfielder scored the winning goal in the 2010 World Cup final against the Netherlands?",
+    "q": "Who scored the winning goal in extra time of the 2010 FIFA World Cup final?",
     "a": "Andres Iniesta",
     "points": 600,
     "type": "text",
@@ -1097,7 +1097,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Brazilian striker nicknamed 'O Fenomeno' won the Golden Boot at the 2002 World Cup with eight goals?",
+    "q": "Who won the 2002 FIFA World Cup Golden Boot with eight goals?",
     "a": "Ronaldo (Nazario)",
     "points": 600,
     "type": "text",
@@ -1107,7 +1107,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which French striker scored the golden goal that won Euro 2000 for France in extra time?",
+    "q": "Who scored the golden goal that won Euro 2000 for France in extra time?",
     "a": "David Trezeguet",
     "points": 800,
     "type": "text",
@@ -1131,13 +1131,13 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Portuguese forward of the 1960s, nicknamed the 'Black Panther', won the Golden Boot at the 1966 World Cup with nine goals?",
+    "q": "Who won the 1966 FIFA World Cup Golden Boot with nine goals?",
     "a": "Eusebio",
     "points": 800,
     "type": "text"
    },
    {
-    "q": "Which French midfielder, born in 1972, scored twice in the 1998 World Cup final and later coached Real Madrid to three Champions League titles?",
+    "q": "Who scored twice in the 1998 FIFA World Cup final and later coached Real Madrid to three Champions League titles?",
     "a": "Zinedine Zidane",
     "points": 1000,
     "type": "text",
@@ -1146,7 +1146,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Russian forward scored a record five goals in a single World Cup match, against Cameroon in 1994?",
+    "q": "Who scored a record five goals in a single FIFA World Cup match, against Cameroon in 1994?",
     "a": "Oleg Salenko",
     "points": 1000,
     "type": "text",
@@ -1155,7 +1155,7 @@ const ENRICH_QUESTIONS = {
     ]
    },
    {
-    "q": "Which Italian referee infamously oversaw the 1966 quarterfinal, but more famously, which French striker was sent off in the 2006 final for headbutting Marco Materazzi?",
+    "q": "Who was sent off in the 2006 FIFA World Cup final for headbutting Marco Materazzi?",
     "a": "Zinedine Zidane",
     "points": 1000,
     "type": "text",
@@ -5481,3 +5481,96 @@ const ENRICH_QUESTIONS = {
    }
   ]
 };
+
+const ENRICH_ADDITIONS = {
+  "General Knowledge": [
+    { q: "What punctuation mark is used to indicate possession in English?", a: "Apostrophe", points: 200, type: "text" }
+  ],
+  "Sports": [
+    { q: "In tennis scoring, what word is used for a score of zero?", a: "Love", points: 200, type: "text" }
+  ],
+  "History": [
+    { q: "Which empire was ruled by Suleiman the Magnificent during its 16th-century peak?", a: "The Ottoman Empire", points: 600, type: "text", accept: ["Ottoman Empire"] }
+  ],
+  "Geography": [
+    { q: "Which capital city sits on the River Seine?", a: "Paris", points: 400, type: "text" }
+  ],
+  "Movies & TV": [
+    { q: "Which 1994 film features the line 'Life is like a box of chocolates'?", a: "Forrest Gump", points: 400, type: "text" }
+  ],
+  "Music & Songs": [
+    { q: "Which six-minute Queen hit famously blends ballad, opera, and hard rock sections?", a: "Bohemian Rhapsody", points: 600, type: "text" }
+  ],
+  "Science": [
+    { q: "What part of the atom contains protons and neutrons?", a: "The nucleus", points: 400, type: "text", accept: ["Nucleus"] }
+  ],
+  "Animals & Nature": [
+    { q: "What is the only mammal capable of sustained true flight?", a: "Bat", points: 400, type: "text", accept: ["Bats"] }
+  ],
+  "Food & Drink": [
+    { q: "Which Italian cheese is traditionally made from buffalo milk in Campania?", a: "Mozzarella", points: 600, type: "text", accept: ["Mozzarella di bufala"] }
+  ],
+  "Famous People": [
+    { q: "Who was the first woman to win a Nobel Prize?", a: "Marie Curie", points: 600, type: "text", accept: ["Curie"] }
+  ],
+  "Technology & Inventions": [
+    { q: "Which company introduced the first iPhone in 2007?", a: "Apple", points: 200, type: "text", accept: ["Apple Inc."] }
+  ],
+  "Space & Astronomy": [
+    { q: "What is the name of the first artificial satellite launched into Earth orbit?", a: "Sputnik 1", points: 400, type: "text", accept: ["Sputnik"] }
+  ],
+  "Art & Literature": [
+    { q: "Who wrote the dystopian novel Nineteen Eighty-Four?", a: "George Orwell", points: 400, type: "text", accept: ["Orwell", "1984"] }
+  ],
+  "Pop Culture": [
+    { q: "What social deduction game became a viral hit in 2020 with crewmates and impostors?", a: "Among Us", points: 400, type: "text" }
+  ],
+  "Famous Landmarks": [
+    { q: "In which country would you find the ancient city of Petra?", a: "Jordan", points: 600, type: "text" }
+  ],
+  "Video Games": [
+    { q: "What studio developed the 2011 game Dark Souls?", a: "FromSoftware", points: 800, type: "text", accept: ["From Software"] }
+  ],
+  "Anime & Manga": [
+    { q: "In Fullmetal Alchemist, what is the name of Edward Elric's younger brother?", a: "Alphonse Elric", points: 600, type: "text", accept: ["Alphonse", "Al"] }
+  ],
+  "Superheroes": [
+    { q: "What is the real name of the Black Panther who first appeared in Marvel comics in 1966?", a: "T'Challa", points: 600, type: "text", accept: ["T Challa"] }
+  ],
+  "Football (Soccer)": [
+    { q: "Which club won the first Premier League title in the 1992-93 season?", a: "Manchester United", points: 400, type: "text" },
+    { q: "Who scored the fastest hat-trick in Premier League history, timed at 2 minutes 56 seconds?", a: "Sadio Mane", points: 600, type: "text", accept: ["Mane"] },
+    { q: "Which national team won Euro 2004 despite entering the tournament as a major underdog?", a: "Greece", points: 600, type: "text" },
+    { q: "Who is the only goalkeeper to win the Ballon d'Or?", a: "Lev Yashin", points: 800, type: "text", accept: ["Yashin"] },
+    { q: "Which club won the European Cup in 1991 after a penalty shootout against Marseille?", a: "Red Star Belgrade", points: 1000, type: "text", accept: ["Red Star", "Crvena zvezda"] }
+  ],
+  "Cars & Automotive": [
+    { q: "What German car brand uses a three-pointed star as its logo?", a: "Mercedes-Benz", points: 200, type: "text", accept: ["Mercedes"] }
+  ],
+  "Internet Culture": [
+    { q: "What three-letter abbreviation means 'too long; didn't read'?", a: "TL;DR", points: 400, type: "text", accept: ["TLDR"] }
+  ],
+  "Mythology": [
+    { q: "In Norse mythology, what tree connects the nine worlds?", a: "Yggdrasil", points: 800, type: "text" }
+  ],
+  "World Religions": [
+    { q: "In Islam, what is the name of the month of fasting?", a: "Ramadan", points: 400, type: "text" }
+  ],
+  "Flags of the World": [
+    { q: "Which country's flag has a red circle centered on a white field?", a: "Japan", points: 200, type: "text" }
+  ],
+  "Logos & Brands": [
+    { q: "Which sportswear brand uses a swoosh logo?", a: "Nike", points: 200, type: "text" }
+  ],
+  "Cartoons & Animation": [
+    { q: "Which animated series is set in the fictional town of Springfield?", a: "The Simpsons", points: 200, type: "text", accept: ["Simpsons"] }
+  ],
+  "TV Shows": [
+    { q: "Which sitcom follows six friends in Manhattan who often meet at Central Perk?", a: "Friends", points: 400, type: "text" }
+  ]
+};
+
+Object.keys(ENRICH_ADDITIONS).forEach(cat => {
+  if (!ENRICH_QUESTIONS[cat]) ENRICH_QUESTIONS[cat] = [];
+  ENRICH_QUESTIONS[cat].push(...ENRICH_ADDITIONS[cat]);
+});

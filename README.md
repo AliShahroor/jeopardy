@@ -125,6 +125,15 @@ Prefer Wikimedia Commons, public-domain, CC0, CC BY, or CC BY-SA images, and
 record the source in `IMAGE_CREDITS.md`. Avoid unclear licenses and
 NonCommercial-only media for the public hosted site.
 
+Current real-photo examples live in the `Famous Landmarks` category and are
+mixed into the normal randomized board pool:
+
+- `$200`: Eiffel Tower photo → identify the landmark.
+- `$400`: Giza pyramids photo → name the nearby city.
+- `$600`: Colosseum photo → name the city.
+- `$800`: Taj Mahal photo → name the Indian city.
+- `$1000`: Petra treasury photo → name the ancient city.
+
 For audio, use a future `assets/audio/` folder and keep clips copyright-safe
 before adding an `audio` question type. Public-domain recordings, self-made
 clips, or licensed/generated snippets are safest for a public site.
