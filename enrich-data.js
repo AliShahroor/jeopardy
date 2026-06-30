@@ -5238,8 +5238,8 @@ const ENRICH_QUESTIONS = {
     "a": "The Eiffel Tower",
     "points": 200,
     "type": "image",
-    "image": "assets/images/landmarks/eiffel-tower.svg",
-    "imageAlt": "Stylized Eiffel Tower silhouette",
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Eiffel_Tower_from_the_Tour_Montparnasse_3%2C_Paris_May_2014.jpg?width=900",
+    "imageAlt": "Photo of the Eiffel Tower in Paris",
     "accept": [
      "Eiffel Tower"
     ]
@@ -5249,32 +5249,32 @@ const ENRICH_QUESTIONS = {
     "a": "Giza",
     "points": 400,
     "type": "image",
-    "image": "assets/images/landmarks/giza-pyramids.svg",
-    "imageAlt": "Stylized pyramids of Giza"
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/All_Gizah_Pyramids.jpg?width=900",
+    "imageAlt": "Photo of the pyramids of Giza"
    },
    {
     "q": "In which city is this ancient amphitheater located?",
     "a": "Rome",
     "points": 600,
     "type": "image",
-    "image": "assets/images/landmarks/colosseum.svg",
-    "imageAlt": "Stylized Colosseum"
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Colosseum_in_Rome%2C_Italy_-_April_2007.jpg?width=900",
+    "imageAlt": "Photo of the Colosseum in Rome"
    },
    {
     "q": "This white marble mausoleum is located in which Indian city?",
     "a": "Agra",
     "points": 800,
     "type": "image",
-    "image": "assets/images/landmarks/taj-mahal.svg",
-    "imageAlt": "Stylized Taj Mahal"
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Taj_Mahal_in_March_2004.jpg?width=900",
+    "imageAlt": "Photo of the Taj Mahal in Agra"
    },
    {
     "q": "This rock-cut treasury facade is part of which ancient city in Jordan?",
     "a": "Petra",
     "points": 1000,
     "type": "image",
-    "image": "assets/images/landmarks/petra.svg",
-    "imageAlt": "Stylized Petra treasury facade"
+    "image": "https://commons.wikimedia.org/wiki/Special:FilePath/Al_Khazneh_Petra_edit_2.jpg?width=900",
+    "imageAlt": "Photo of Al-Khazneh in Petra"
    }
   ],
   "Technology & Inventions": [

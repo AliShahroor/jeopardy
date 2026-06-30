@@ -67,7 +67,7 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
 | `questions.js` | Defines `QUESTION_BANK` (genre categories like Video Games, Anime, Flags) **and** runs the merge + de-dupe pipeline (see below), plus `CHALLENGE_ANSWERS` for the interactive challenges. |
 | `game.js` | Game engine, local storage, sound, particle systems, and the fuzzy answer matcher (`fuzzyAnswerMatch`, `matchNameSet`). |
 | `app.js` | UI controller: screens, board rendering, the resolve/steal flow, all four bonus modes, sharing, etc. |
-| `assets/images/` | Local visual assets used by image questions. The starter pack includes a few lightweight landmark SVGs. |
+| `IMAGE_CREDITS.md` | Source and license notes for externally hosted image questions. |
 
 ### How the question bank is assembled
 
@@ -107,7 +107,7 @@ it will never show up on the board. Optionally add an icon for it in
 
 ### Adding image and audio-style questions
 
-Image questions can point at local assets:
+Image questions can point at remote, freely licensed image URLs:
 
 ```js
 {
@@ -115,11 +115,15 @@ Image questions can point at local assets:
   a: "The Eiffel Tower",
   points: 200,
   type: "image",
-  image: "assets/images/landmarks/eiffel-tower.svg",
-  imageAlt: "Stylized Eiffel Tower silhouette",
+  image: "https://commons.wikimedia.org/wiki/Special:FilePath/Eiffel_Tower_from_the_Tour_Montparnasse_3%2C_Paris_May_2014.jpg?width=900",
+  imageAlt: "Photo of the Eiffel Tower in Paris",
   accept: ["Eiffel Tower"]
 }
 ```
+
+Prefer Wikimedia Commons, public-domain, CC0, CC BY, or CC BY-SA images, and
+record the source in `IMAGE_CREDITS.md`. Avoid unclear licenses and
+NonCommercial-only media for the public hosted site.
 
 For audio, use a future `assets/audio/` folder and keep clips copyright-safe
 before adding an `audio` question type. Public-domain recordings, self-made
