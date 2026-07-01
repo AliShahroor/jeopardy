@@ -535,7 +535,11 @@
     party: ['General Knowledge', 'Arab World', 'Football (Soccer)', 'Movies & TV', 'Music & Songs', 'Food & Drink'],
     arab: ['Arab World', 'Flags of the World', 'Football (Soccer)', 'Food & Drink', 'Famous Landmarks', 'General Knowledge'],
     football: ['Football (Soccer)', 'Sports', 'Flags of the World', 'Famous People', 'General Knowledge', 'Pop Culture'],
-    hard: ['Science', 'History', 'Mythology', 'World Religions', 'Technology & Inventions', 'Art & Literature']
+    hard: ['Science', 'History', 'Mythology', 'World Religions', 'Technology & Inventions', 'Art & Literature'],
+    world: ['Flags of the World', 'Geography', 'Famous Landmarks', 'Arab World', 'World Religions', 'History'],
+    cinema: ['Movies & TV', 'Music & Songs', 'Pop Culture', 'Famous People', 'Art & Literature', 'General Knowledge'],
+    food: ['Food & Drink', 'Arab World', 'Geography', 'Science', 'General Knowledge', 'Pop Culture'],
+    school: ['Science', 'History', 'Geography', 'Math & Logic', 'Technology & Inventions', 'Art & Literature']
   };
   let topicSearch = '';
 

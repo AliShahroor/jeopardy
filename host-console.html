@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeopardy Host Console</title>
+  <link rel="stylesheet" href="style.css?v=20260701-5">
+  <style>
+    body { min-height: 100vh; padding: 24px; }
+    .host-console { max-width: 760px; margin: 0 auto; }
+    .host-panel { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 18px; margin: 16px 0; }
+    .host-answer { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .host-answer:last-child { border-bottom: 0; }
+    .host-link { word-break: break-all; color: var(--gold); }
+  </style>
+</head>
+<body>
+  <main class="host-console">
+    <h1 class="title-main" style="font-size:2.6rem">Host Console</h1>
+    <p class="title-sub">Family Feud answers stay here for the host device.</p>
+
+    <div class="host-panel" id="room-panel">
+      <button class="btn btn-primary" id="create-room">Create Host Room</button>
+      <p class="bonus-desc" id="room-link"></p>
+    </div>
+
+    <div class="host-panel">
+      <label class="bonus-field-label">Survey question</label>
+      <select class="input-field" id="prompt-select"></select>
+    </div>
+
+    <div class="host-panel" id="answer-panel">
+      <p class="bonus-desc">Create a host room to see answers.</p>
+    </div>
+  </main>
+
+  <script>
+    const params = new URLSearchParams(location.search);
+    let roomId = params.get('room') || '';
+    let hostToken = params.get('token') || '';
+    let prompts = [];
+
+    async function api(url, options) {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error((await res.json()).error || res.statusText);
+      return res.json();
+    }
+
+    function renderAnswers(data) {
+      const panel = document.getElementById('answer-panel');
+      if (!data || !data.answers) {
+        panel.innerHTML = '<p class="bonus-desc">Create a host room to see answers.</p>';
+        return;
+      }
+      panel.innerHTML = `
+        <p class="bonus-feud-q">${data.prompt}</p>
+        ${data.answers.map((answer, index) => `
+          <div class="host-answer">
+            <strong>${index + 1}. ${answer}</strong>
+            <span>$${700 - (index * 100)}</span>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    async function refreshHost() {
+      if (!roomId || !hostToken) return;
+      const data = await api(`/api/rooms/${roomId}/host?token=${encodeURIComponent(hostToken)}`);
+      document.getElementById('prompt-select').value = data.feudIndex;
+      renderAnswers(data);
+      document.getElementById('room-link').innerHTML = `Host link: <span class="host-link">${location.origin}/host-console.html?room=${roomId}&token=${hostToken}</span>`;
+    }
+
+    async function loadPrompts() {
+      prompts = await api('/api/feud-prompts');
+      document.getElementById('prompt-select').innerHTML = prompts
+        .map(p => `<option value="${p.index}">${p.prompt.replace('We asked 100 people: ', '')}</option>`)
+        .join('');
+      await refreshHost();
+    }
+
+    document.getElementById('create-room').addEventListener('click', async () => {
+      const room = await api('/api/rooms', { method: 'POST' });
+      roomId = room.roomId;
+      hostToken = room.hostToken;
+      history.replaceState(null, '', room.hostUrl);
+      await refreshHost();
+    });
+
+    document.getElementById('prompt-select').addEventListener('change', async (event) => {
+      if (!roomId || !hostToken) return;
+      const data = await api(`/api/rooms/${roomId}/feud`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostToken, feudIndex: Number(event.target.value) })
+      });
+      renderAnswers(data);
+    });
+
+    loadPrompts().catch(err => {
+      document.getElementById('answer-panel').innerHTML = `<p class="bonus-desc">${err.message}</p>`;
+    });
+  </script>
+</body>
+</html>
