@@ -2238,8 +2238,8 @@ textarea.input-field {
 }
 .typed-badge.muted { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
 /* Family Feud: per-answer "who found it" credit buttons + ranked values */
-.feud-credit { display: inline-flex; gap: 6px; margin-left: auto; }
-.feud-credit .btn { padding: 4px 10px; font-size: 0.78rem; }
+.feud-credit { display: inline-flex; gap: 6px; margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+.feud-credit .btn { padding: 4px 10px; font-size: 0.74rem; white-space: nowrap; }
 .feud-text { flex: 1; }
 .feud-worth { color: var(--gold); font-weight: 700; opacity: 0.75; margin-left: 4px; }
 .feud-value { font-family: var(--font-display); font-weight: 700; color: var(--dark); margin-left: auto; }
@@ -2323,6 +2323,19 @@ textarea.input-field {
 .feud-slot.revealed { background: linear-gradient(135deg, var(--gold-dark), var(--gold)); color: var(--dark); border-color: var(--gold); font-weight: 700; }
 .feud-rank { width: 26px; height: 26px; border-radius: 50%; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
 .feud-slot.revealed .feud-rank { background: rgba(0,0,0,0.25); color: #fff; }
+
+@media (max-width: 700px) {
+  .feud-slot {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .feud-credit {
+    width: 100%;
+    margin-left: 38px;
+    justify-content: flex-start;
+  }
+}
 
 /* ---- Undo-last-award bar (lightweight; Adjust modal remains for deep edits) ---- */
 .undo-bar {

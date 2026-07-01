@@ -1719,6 +1719,113 @@
     }, 500);
   }
 
+  function downloadResultsCard() {
+    if (!game || !game.players || game.players.length === 0) return;
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const w = 1080;
+    const h = 1350;
+    canvas.width = w;
+    canvas.height = h;
+
+    const scoreboard = game.getScoreboard();
+    const winner = game.getWinner();
+    const gains = game.players.map((player, idx) => ({
+      player,
+      gain: player.score - ((game.initialScores && game.initialScores[idx]) || 0),
+      bonus: (game.bonusAwards && game.bonusAwards[idx]) || 0
+    }));
+    const comeback = gains.slice().sort((a, b) => b.gain - a.gain)[0];
+    const bonusWinner = gains.slice().sort((a, b) => b.bonus - a.bonus)[0];
+
+    function roundedRect(x, y, width, height, radius) {
+      if (ctx.roundRect) {
+        ctx.roundRect(x, y, width, height, radius);
+        return;
+      }
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+      ctx.lineTo(x + radius, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+    }
+
+    ctx.fillStyle = '#050A4E';
+    ctx.fillRect(0, 0, w, h);
+    const grad = ctx.createLinearGradient(0, 0, w, h);
+    grad.addColorStop(0, 'rgba(255,215,0,0.24)');
+    grad.addColorStop(0.52, 'rgba(6,12,233,0.18)');
+    grad.addColorStop(1, 'rgba(0,0,0,0.26)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFD700';
+    ctx.font = '700 58px Arial, sans-serif';
+    ctx.fillText('Jeopardy Night', w / 2, 125);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 92px Arial, sans-serif';
+    ctx.fillText(winner.name, w / 2, 245);
+    ctx.fillStyle = '#FFD700';
+    ctx.font = '700 52px Arial, sans-serif';
+    ctx.fillText(`Winner  $${winner.score}`, w / 2, 320);
+
+    function card(x, y, width, height, label, value) {
+      ctx.fillStyle = 'rgba(255,255,255,0.08)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      roundedRect(x, y, width, height, 18);
+      ctx.fill();
+      ctx.stroke();
+      ctx.textAlign = 'left';
+      ctx.fillStyle = 'rgba(255,255,255,0.62)';
+      ctx.font = '700 25px Arial, sans-serif';
+      ctx.fillText(label, x + 30, y + 45);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = '700 34px Arial, sans-serif';
+      ctx.fillText(value, x + 30, y + 96);
+    }
+
+    card(80, 390, 280, 135, 'MVP', `${winner.name}`);
+    card(400, 390, 280, 135, 'Comeback', comeback ? `${comeback.player.name} +$${Math.max(0, comeback.gain)}` : 'None');
+    card(720, 390, 280, 135, 'Bonus', bonusWinner && bonusWinner.bonus > 0 ? `${bonusWinner.player.name} +$${bonusWinner.bonus}` : 'None');
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 40px Arial, sans-serif';
+    ctx.fillText('Final Standings', 90, 625);
+
+    scoreboard.forEach((player, idx) => {
+      const y = 700 + idx * 105;
+      ctx.fillStyle = 'rgba(255,255,255,0.07)';
+      ctx.beginPath();
+      roundedRect(80, y - 55, 920, 78, 14);
+      ctx.fill();
+      ctx.fillStyle = idx === 0 ? '#FFD700' : '#FFFFFF';
+      ctx.font = '700 34px Arial, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(`${idx + 1}. ${player.name}`, 120, y);
+      ctx.textAlign = 'right';
+      ctx.fillText(`$${player.score}`, 955, y);
+    });
+
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.58)';
+    ctx.font = '24px Arial, sans-serif';
+    ctx.fillText('Developed by Ali Shahroor and Mohamed Al Ani', w / 2, h - 80);
+
+    const link = document.createElement('a');
+    link.download = `jeopardy-results-${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Share card downloaded!', 'success');
+  }
+
   // ---- Saved Games ----
   function showSavedGames() {
     sound.playClick();
@@ -2630,7 +2737,10 @@
   function feudTotals() {
     const f = FAMILY_FEUD[bonusState.feudIndex];
     const t = { a: 0, b: 0 };
-    f.answers.forEach((_, i) => { const w = bonusState.feudRevealed[i]; if (w) t[w] += feudValue(i, f.answers.length); });
+    f.answers.forEach((_, i) => {
+      const w = bonusState.feudRevealed[i];
+      if (w === 'a' || w === 'b') t[w] += feudValue(i, f.answers.length);
+    });
     return t;
   }
 
@@ -2641,6 +2751,12 @@
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
     const nameA = escapeHtml(contestantNameOnly('a')), nameB = escapeHtml(contestantNameOnly('b'));
     const side = bonusState.feudSide || 'a';
+    const creditControls = (i) => `
+      <span class="feud-credit">
+        <button class="btn btn-secondary" onclick="event.stopPropagation();window.app.feudCredit(${i}, 'a')">${nameA}</button>
+        <button class="btn btn-secondary" onclick="event.stopPropagation();window.app.feudCredit(${i}, 'b')">${nameB}</button>
+        <button class="btn btn-secondary" onclick="event.stopPropagation();window.app.feudCredit(${i}, 'none')">No points</button>
+      </span>`;
     const slots = f.answers.map((ans, i) => {
       const val = feudValue(i, total);
       const who = bonusState.feudRevealed[i];
@@ -2651,11 +2767,13 @@
           <span class="feud-rank"${p ? ` style="background:${p.color}"` : ''}>${i + 1}</span>
           <span class="feud-text">${escapeHtml(ans)}${credit}</span>
           <span class="feud-value">$${val}</span>
+          ${creditControls(i)}
         </div>`;
       }
       return `<div class="feud-slot">
         <span class="feud-rank">${i + 1}</span>
         <span class="feud-text">&middot; &middot; &middot; <small class="feud-worth">$${val}</small></span>
+        ${creditControls(i)}
       </div>`;
     }).join('');
     const tot = feudTotals();
@@ -2758,9 +2876,14 @@
   }
 
   function revealFeudAnswer(i, side) {
-    if (bonusState.feudRevealed[i]) return;
     bonusState.feudRevealed[i] = side;
     sound.playChallengeCorrect();
+    renderBonusFeudPlay();
+  }
+
+  function feudCredit(i, side) {
+    bonusState.feudRevealed[i] = side;
+    sound.playClick();
     renderBonusFeudPlay();
   }
 
@@ -2979,6 +3102,7 @@
     filterTopics,
     surpriseMe,
     applyPreset,
+    downloadResultsCard,
     openCustomCategory,
     closeCustomCategory,
     saveCustomCategory,
@@ -3014,6 +3138,7 @@
     revealFeudAnswer,
     feudSetSide,
     feudGuess,
+    feudCredit,
     feudRevealRest,
     finishFeud,
     beginBonusTurn,
