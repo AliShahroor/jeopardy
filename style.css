@@ -429,6 +429,23 @@ textarea.input-field {
   letter-spacing: 0;
 }
 
+.creator-credit a {
+  color: rgba(255, 215, 0, 0.78);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.2);
+  transition: color var(--transition-speed) ease, border-color var(--transition-speed) ease;
+}
+
+.creator-credit a:hover {
+  color: var(--gold);
+  border-color: rgba(255, 215, 0, 0.55);
+}
+
+.creator-credit span {
+  margin: 0 6px;
+  color: rgba(255, 255, 255, 0.28);
+}
+
 .login-recent {
   margin-top: 30px;
 }
