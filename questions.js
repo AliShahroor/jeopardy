@@ -789,11 +789,50 @@ function getQuestionsByPoints(category, points) {
   return QUESTION_BANK[category].filter(q => q.points === points);
 }
 
+const SEEN_QUESTION_KEY = 'jeopardy_seen_questions_v1';
+
+function questionMemoryKey(question) {
+  if (!question) return '';
+  return [question.category || '', question.points || '', question.q || '']
+    .join('|')
+    .toLowerCase()
+    .replace(/[^a-z0-9|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getSeenQuestions() {
+  try {
+    if (typeof localStorage === 'undefined') return new Set();
+    const raw = localStorage.getItem(SEEN_QUESTION_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch (e) {
+    return new Set();
+  }
+}
+
+function rememberSeenQuestion(question) {
+  try {
+    if (typeof localStorage === 'undefined' || !question) return;
+    const key = questionMemoryKey(question);
+    if (!key) return;
+    const seen = getSeenQuestions();
+    seen.add(key);
+    localStorage.setItem(SEEN_QUESTION_KEY, JSON.stringify(Array.from(seen).slice(-2500)));
+  } catch (e) {
+    // Storage can fail in private browsing; the game should continue normally.
+  }
+}
+
 // Helper to get a random question from a category at a point value
-function getRandomQuestion(category, points) {
+function getRandomQuestion(category, points, seenQuestions) {
   const questions = getQuestionsByPoints(category, points);
   if (questions.length === 0) return null;
-  return questions[Math.floor(Math.random() * questions.length)];
+  const unseen = seenQuestions
+    ? questions.filter(q => !seenQuestions.has(questionMemoryKey({ ...q, category })))
+    : questions;
+  const pool = unseen.length ? unseen : questions;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 // Get all available categories
@@ -805,17 +844,18 @@ function getAvailableCategories() {
 function buildGameBoard(selectedCategories) {
   const board = {};
   const pointValues = [200, 400, 600, 800, 1000];
+  const seenQuestions = getSeenQuestions();
 
   const ansKey = a => (a == null ? '' : String(a)).toLowerCase().replace(/[^a-z0-9]/g, '');
   selectedCategories.forEach(category => {
     board[category] = [];
     const usedAns = new Set(); // keep one game's board free of repeated answers
     pointValues.forEach(points => {
-      let question = getRandomQuestion(category, points);
+      let question = getRandomQuestion(category, points, seenQuestions);
       // Re-roll a few times to avoid the same answer appearing twice this game.
       let tries = 0;
       while (question && question.a && usedAns.has(ansKey(question.a)) && tries < 8) {
-        question = getRandomQuestion(category, points);
+        question = getRandomQuestion(category, points, seenQuestions);
         tries++;
       }
       if (question) {

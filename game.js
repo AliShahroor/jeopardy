@@ -20,6 +20,8 @@ class JeopardyGame {
     this.challengeCorrectAnswers = [];
     this.challengeTimer = null;
     this.bonusLifelines = 3; // head-to-head bonus rounds remaining
+    this.initialScores = [];
+    this.bonusAwards = {};
   }
 
   // Build the players array from either plain names or {name, members} objects.
@@ -79,6 +81,8 @@ class JeopardyGame {
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
     this.bonusLifelines = 3;
+    this.initialScores = this.players.map(p => p.score || 0);
+    this.bonusAwards = {};
   }
 
   // Initialize a custom game
@@ -95,6 +99,8 @@ class JeopardyGame {
     this.currentPlayerIndex = 0;
     this.isGameOver = false;
     this.bonusLifelines = 3;
+    this.initialScores = this.players.map(p => p.score || 0);
+    this.bonusAwards = {};
   }
 
   // Load a saved game state
@@ -111,6 +117,8 @@ class JeopardyGame {
     this.answeredCount = state.answeredCount;
     this.isGameOver = state.isGameOver;
     this.bonusLifelines = state.bonusLifelines != null ? state.bonusLifelines : 3;
+    this.initialScores = state.initialScores || this.players.map(p => p.score || 0);
+    this.bonusAwards = state.bonusAwards || {};
   }
 
   // Save game state
@@ -128,6 +136,8 @@ class JeopardyGame {
       answeredCount: this.answeredCount,
       isGameOver: this.isGameOver,
       bonusLifelines: this.bonusLifelines,
+      initialScores: this.initialScores,
+      bonusAwards: this.bonusAwards,
       savedAt: new Date().toISOString()
     };
   }
@@ -184,9 +194,12 @@ class JeopardyGame {
 
   // Adjust a player's score by a delta (used for steals, where one question
   // can change several players' scores before the cell is closed).
-  adjustScore(playerIndex, delta) {
+  adjustScore(playerIndex, delta, meta) {
     if (this.players[playerIndex]) {
       this.players[playerIndex].score += delta;
+      if (meta && meta.bonus && delta > 0) {
+        this.bonusAwards[playerIndex] = (this.bonusAwards[playerIndex] || 0) + delta;
+      }
     }
   }
 

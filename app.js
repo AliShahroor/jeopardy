@@ -531,6 +531,12 @@
 
   // ---- Topic Selection ----
   const TOPIC_RENDER_CAP = 90; // cap rendered cards for performance with 500+ categories
+  const CATEGORY_PRESETS = {
+    party: ['General Knowledge', 'Arab World', 'Football (Soccer)', 'Movies & TV', 'Music & Songs', 'Food & Drink'],
+    arab: ['Arab World', 'Flags of the World', 'Football (Soccer)', 'Food & Drink', 'Famous Landmarks', 'General Knowledge'],
+    football: ['Football (Soccer)', 'Sports', 'Flags of the World', 'Famous People', 'General Knowledge', 'Pop Culture'],
+    hard: ['Science', 'History', 'Mythology', 'World Religions', 'Technology & Inventions', 'Art & Literature']
+  };
   let topicSearch = '';
 
   function showTopicScreen() {
@@ -639,6 +645,18 @@
     sound.playBoardReveal();
     renderTopicGrid();
     showToast('Picked 6 random categories — hit Start!', 'success');
+  }
+
+  function applyPreset(name) {
+    const available = getAvailableCategories();
+    const preset = CATEGORY_PRESETS[name] || [];
+    setupState.selectedTopics = preset.filter(cat => available.includes(cat)).slice(0, 6);
+    topicSearch = '';
+    const search = document.getElementById('topic-search');
+    if (search) search.value = '';
+    sound.playBoardReveal();
+    renderTopicGrid();
+    showToast('Preset loaded — hit Start!', 'success');
   }
 
   function startTopicGame() {
@@ -1427,7 +1445,10 @@
   // Launch a bonus round straight from a "nobody got it" question.
   function bonusFromQuestion() {
     const question = game.currentQuestion;
-    if (question) game.markAnswered(question.cellKey);
+    if (question) {
+      game.markAnswered(question.cellKey);
+      if (window.rememberSeenQuestion) window.rememberSeenQuestion(question);
+    }
     closeQuestionModal();
     game.nextPlayer();
     renderScoreboard();
@@ -1456,7 +1477,10 @@
   // Close out the current question (cell resolved once), advance the turn.
   function finishQuestion() {
     const question = game.currentQuestion;
-    if (question) game.markAnswered(question.cellKey);
+    if (question) {
+      game.markAnswered(question.cellKey);
+      if (window.rememberSeenQuestion) window.rememberSeenQuestion(question);
+    }
     closeQuestionModal();
     game.nextPlayer();
     renderScoreboard();
@@ -1651,6 +1675,31 @@
         </div>
       </div>
     `).join('');
+
+    const gains = game.players.map((player, idx) => ({
+      player,
+      gain: player.score - ((game.initialScores && game.initialScores[idx]) || 0),
+      bonus: (game.bonusAwards && game.bonusAwards[idx]) || 0
+    }));
+    const comeback = gains.slice().sort((a, b) => b.gain - a.gain)[0];
+    const bonusWinner = gains.slice().sort((a, b) => b.bonus - a.bonus)[0];
+    const recap = document.getElementById('results-recap');
+    if (recap) {
+      recap.innerHTML = `
+        <div class="recap-card">
+          <span>MVP</span>
+          <strong>${escapeHtml(winner.name)} &middot; $${winner.score}</strong>
+        </div>
+        <div class="recap-card">
+          <span>Biggest Comeback</span>
+          <strong>${comeback ? `${escapeHtml(comeback.player.name)} &middot; +$${Math.max(0, comeback.gain)}` : 'No comeback'}</strong>
+        </div>
+        <div class="recap-card">
+          <span>Bonus Winner</span>
+          <strong>${bonusWinner && bonusWinner.bonus > 0 ? `${escapeHtml(bonusWinner.player.name)} &middot; +$${bonusWinner.bonus}` : 'No bonus winner'}</strong>
+        </div>
+      `;
+    }
 
     // Confetti for the winner
     setTimeout(() => {
@@ -2317,8 +2366,8 @@
     const A = game.players[bonusState.a], B = game.players[bonusState.b];
     const ea = bonusState.earned.a, eb = bonusState.earned.b;
     // Everyone keeps what they earned (per-correct), no winner-take-all.
-    if (ea > 0) game.adjustScore(bonusState.a, ea);
-    if (eb > 0) game.adjustScore(bonusState.b, eb);
+    if (ea > 0) game.adjustScore(bonusState.a, ea, { bonus: true });
+    if (eb > 0) game.adjustScore(bonusState.b, eb, { bonus: true });
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2452,7 +2501,7 @@
     else { winIdx = oppIdx; title = 'Came Up Short!'; }
     line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> of ${bonusState.bid} for <strong>$${bonusState.bidWager}</strong> &mdash; ${escapeHtml(bonusState.prompt)}.`;
     const win = game.players[winIdx];
-    if (award > 0) game.adjustScore(winIdx, award);
+    if (award > 0) game.adjustScore(winIdx, award, { bonus: true });
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2529,7 +2578,7 @@
     const idx = bonusState.a;
     const w = game.players[idx];
     const q = bonusState.wagerQ;
-    game.adjustScore(idx, correct ? bonusState.wager : -bonusState.wager);
+    game.adjustScore(idx, correct ? bonusState.wager : -bonusState.wager, { bonus: true });
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2714,8 +2763,8 @@
   function finishFeud() {
     const tot = feudTotals();
     const aPay = tot.a, bPay = tot.b;
-    if (aPay > 0) game.adjustScore(bonusState.a, aPay);
-    if (bPay > 0) game.adjustScore(bonusState.b, bPay);
+    if (aPay > 0) game.adjustScore(bonusState.a, aPay, { bonus: true });
+    if (bPay > 0) game.adjustScore(bonusState.b, bPay, { bonus: true });
     if (game.bonusLifelines > 0) game.bonusLifelines--;
     updateBonusButton();
     renderScoreboard();
@@ -2925,6 +2974,7 @@
     toggleTopic,
     filterTopics,
     surpriseMe,
+    applyPreset,
     openCustomCategory,
     closeCustomCategory,
     saveCustomCategory,

@@ -213,6 +213,13 @@
 
       <div class="topic-selected" id="topic-selected"></div>
 
+      <div class="topic-presets">
+        <button class="timer-option" onclick="app.applyPreset('party')">Party Mix</button>
+        <button class="timer-option" onclick="app.applyPreset('arab')">Arab Night</button>
+        <button class="timer-option" onclick="app.applyPreset('football')">Football Heavy</button>
+        <button class="timer-option" onclick="app.applyPreset('hard')">Hard Mode</button>
+      </div>
+
       <input type="text" id="topic-search" class="input-field topic-search"
              placeholder="🔎 Search categories…"
              autocomplete="off" oninput="app.filterTopics(this.value)">
@@ -354,6 +361,7 @@
       </div>
 
       <div class="results-scoreboard" id="results-scoreboard"></div>
+      <div class="results-recap" id="results-recap"></div>
 
       <div class="results-actions">
         <button class="btn btn-primary btn-large" onclick="app.showSetupScreen()">
@@ -464,12 +472,12 @@
   </div>
 
   <!-- Scripts -->
-  <script src="jeopardy-data.js?v=20260701-3"></script>
-  <script src="jeopardy-extra.js?v=20260701-3"></script>
-  <script src="bonus-data.js?v=20260701-3"></script>
-  <script src="enrich-data.js?v=20260701-3"></script>
-  <script src="questions.js?v=20260701-3"></script>
-  <script src="game.js?v=20260701-3"></script>
-  <script src="app.js?v=20260701-3"></script>
+  <script src="jeopardy-data.js?v=20260701-4"></script>
+  <script src="jeopardy-extra.js?v=20260701-4"></script>
+  <script src="bonus-data.js?v=20260701-4"></script>
+  <script src="enrich-data.js?v=20260701-4"></script>
+  <script src="questions.js?v=20260701-4"></script>
+  <script src="game.js?v=20260701-4"></script>
+  <script src="app.js?v=20260701-4"></script>
 </body>
 </html>

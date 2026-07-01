@@ -513,6 +513,14 @@ textarea.input-field {
   align-items: center;
 }
 
+.topic-presets {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+
 .creator-credit--menu {
   margin: 18px 0 0;
 }
@@ -1493,6 +1501,32 @@ textarea.input-field {
 
 .results-scoreboard {
   margin-bottom: 40px;
+}
+
+.results-recap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: -18px 0 34px;
+}
+
+.recap-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+}
+
+.recap-card span {
+  display: block;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.78rem;
+  margin-bottom: 6px;
+}
+
+.recap-card strong {
+  color: var(--gold);
 }
 
 .result-player-row {
