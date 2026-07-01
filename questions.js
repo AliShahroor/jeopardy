@@ -632,7 +632,7 @@ if (typeof REAL_CATEGORIES !== 'undefined') {
   Object.assign(QUESTION_BANK, REAL_CATEGORIES);
 }
 
-// Curate the playable board to 25 broad, exciting categories. Anything not in
+// Curate the playable board to broad, exciting categories. Anything not in
 // this list (older narrow placeholders) is removed from the active set.
 const ACTIVE_CATEGORIES = [
   // Curated, direct-question themes (clean, well-known, randomized)
@@ -643,7 +643,7 @@ const ACTIVE_CATEGORIES = [
   'Video Games', 'Anime & Manga', 'Superheroes', 'Football (Soccer)',
   'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World',
   // New categories
-  'Logos & Brands', 'Cartoons & Animation', 'TV Shows'
+  'Arab World', 'Logos & Brands', 'Cartoons & Animation', 'TV Shows'
 ];
 Object.keys(QUESTION_BANK).forEach(k => {
   if (ACTIVE_CATEGORIES.indexOf(k) === -1) delete QUESTION_BANK[k];

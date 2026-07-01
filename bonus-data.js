@@ -713,6 +713,42 @@ const NAME_SETS = {
   "washington dc",
   "wellington",
   "yerevan"
+ ],
+ "arab_countries": [
+  "algeria", "bahrain", "comoros", "djibouti", "egypt", "iraq", "jordan",
+  "kuwait", "lebanon", "libya", "mauritania", "morocco", "oman", "palestine",
+  "qatar", "saudi arabia", "somalia", "sudan", "syria", "tunisia",
+  "united arab emirates", "uae", "yemen"
+ ],
+ "gcc_countries": [
+  "bahrain", "kuwait", "oman", "qatar", "saudi arabia",
+  "united arab emirates", "uae"
+ ],
+ "middle_east_capitals": [
+  "abu dhabi", "amman", "baghdad", "beirut", "cairo", "damascus", "doha",
+  "jerusalem", "kuwait city", "manama", "muscat", "riyadh", "sanaa", "tehran"
+ ],
+ "qatar_landmarks": [
+  "souq waqif", "museum of islamic art", "mia", "katara", "katara cultural village",
+  "the pearl", "the pearl qatar", "lusail", "aspire tower", "villaggio",
+  "national museum of qatar", "nmoq", "al bayt stadium", "lusail stadium",
+  "education city", "msheireb", "banana island", "doha corniche", "corniche"
+ ],
+ "ramadan_foods": [
+  "dates", "water", "soup", "lentil soup", "harees", "thareed", "samboosa",
+  "sambosa", "samosa", "qatayef", "luqaimat", "kunafa", "vimto", "jallab",
+  "tamarind", "rice", "chicken", "yogurt", "fattoush"
+ ],
+ "world_cup_winners": [
+  "argentina", "brazil", "england", "france", "germany", "italy", "spain",
+  "uruguay", "west germany"
+ ],
+ "champions_league_winners": [
+  "real madrid", "milan", "ac milan", "bayern munich", "liverpool",
+  "barcelona", "ajax", "manchester united", "inter milan", "juventus",
+  "benfica", "chelsea", "nottingham forest", "porto", "celtic", "hamburg",
+  "steaua bucharest", "marseille", "borussia dortmund", "feyenoord",
+  "aston villa", "psv", "red star belgrade", "manchester city"
  ]
 };
 
@@ -726,5 +762,13 @@ const NAME_PROMPT_KEY = {
  "U.S. states": "us_states",
  "Planets in the Solar System": "planets",
  "Elements on the periodic table": "elements_symbols",
- "NBA teams": "nba_teams"
+ "NBA teams": "nba_teams",
+ "Arab countries": "arab_countries",
+ "Countries with Arabic as an official language": "arab_countries",
+ "GCC countries": "gcc_countries",
+ "Middle Eastern capitals": "middle_east_capitals",
+ "Qatar landmarks": "qatar_landmarks",
+ "Ramadan foods": "ramadan_foods",
+ "Football World Cup winners": "world_cup_winners",
+ "Champions League winners": "champions_league_winners"
 };

@@ -53,6 +53,7 @@
     "Mythology": "&#9889;",
     "World Religions": "&#128720;",
     "Flags of the World": "&#128681;",
+    "Arab World": "&#128332;",
     "Logos & Brands": "&#127991;",
     "Cartoons & Animation": "&#128371;",
     "TV Shows": "&#128250;"
@@ -1890,9 +1891,9 @@
       earned: { a: 0, b: 0 },    // rapid-fire $ earned (banked at end)
       current: 'a', queue: [], qIndex: 0,
       prompt: NAME_PROMPTS[Math.floor(Math.random() * NAME_PROMPTS.length)],
-      nameScoring: 'rate',       // 'rate' (per N named) | 'bid' (all-or-nothing)
+      nameScoring: 'rate',       // 'rate' (per N named) | 'bid' (target + wager)
       ratePer: 10, ratePay: 100, // rate mode: every <ratePer> named = $<ratePay>
-      bid: 10, attempter: 'a', count: 0, namedList: [],
+      bid: 10, bidWager: 500, attempter: 'a', count: 0, namedList: [],
       wagerSide: 'a', wager: 500, wagerQ: null, // double-or-nothing
       feudIndex: (typeof FAMILY_FEUD !== 'undefined') ? Math.floor(Math.random() * FAMILY_FEUD.length) : 0,
       feudRevealed: {}, feudFound: { a: 0, b: 0 },
@@ -1962,6 +1963,11 @@
   function setBonusPrompt(val) { bonusState.prompt = val; }
   function setBonusBid(delta) {
     bonusState.bid = Math.max(1, Math.min(99, bonusState.bid + delta));
+    sound.playClick();
+    renderBonusSetup();
+  }
+  function setNameBidWager(delta) {
+    bonusState.bidWager = Math.max(100, Math.min(1000, bonusState.bidWager + delta));
     sound.playClick();
     renderBonusSetup();
   }
@@ -2083,7 +2089,7 @@
       const isRate = bonusState.nameScoring === 'rate';
       desc = isRate
         ? `Name as many as you can. Every <strong>${bonusState.ratePer}</strong> you name banks <strong>+$${bonusState.ratePay}</strong>.`
-        : `Bid how many you can name. Make it &rarr; <strong>+$${bonusState.bid * 25}</strong> (bid &times; $25); fall short &rarr; opponent gets <strong>+$100</strong>.`;
+        : `Bid how many you can name and the money at stake. Make it &rarr; <strong>+$${bonusState.bidWager}</strong>; fall short &rarr; opponent gets <strong>+$${bonusState.bidWager}</strong>.`;
       const attA = game.players[bonusState.a], attB = game.players[bonusState.b];
       body = `
         ${vs}
@@ -2095,25 +2101,31 @@
           <label class="bonus-field-label">Scoring</label>
           <div class="bonus-attempter">
             <button class="team-mode-btn ${isRate ? 'selected' : ''}" onclick="window.app.setNameScoring('rate')">Rate ($ per group)</button>
-            <button class="team-mode-btn ${!isRate ? 'selected' : ''}" onclick="window.app.setNameScoring('bid')">Bid (all or nothing)</button>
+            <button class="team-mode-btn ${!isRate ? 'selected' : ''}" onclick="window.app.setNameScoring('bid')">Bid (risk/reward)</button>
           </div>
           ${isRate ? `
           <label class="bonus-field-label">Every <strong>${bonusState.ratePer}</strong> named = <strong>$${bonusState.ratePay}</strong></label>
           <div class="bid-stepper">
             <span class="bid-label">per</span>
-            <button class="btn btn-secondary" onclick="window.app.setRate('per',-5)">&minus;</button>
+            <button class="btn btn-secondary" onclick="window.app.setRate('per',-1)">&minus;</button>
             <span class="bid-value">${bonusState.ratePer}</span>
-            <button class="btn btn-secondary" onclick="window.app.setRate('per',5)">+</button>
+            <button class="btn btn-secondary" onclick="window.app.setRate('per',1)">+</button>
             <span class="bid-label">= $</span>
-            <button class="btn btn-secondary" onclick="window.app.setRate('pay',-50)">&minus;</button>
+            <button class="btn btn-secondary" onclick="window.app.setRate('pay',-25)">&minus;</button>
             <span class="bid-value">${bonusState.ratePay}</span>
-            <button class="btn btn-secondary" onclick="window.app.setRate('pay',50)">+</button>
+            <button class="btn btn-secondary" onclick="window.app.setRate('pay',25)">+</button>
           </div>` : `
-          <label class="bonus-field-label">Winning bid &mdash; how many?</label>
+          <label class="bonus-field-label">Target count</label>
           <div class="bid-stepper">
             <button class="btn btn-secondary" onclick="window.app.setBonusBid(-1)">&minus;</button>
             <span class="bid-value">${bonusState.bid}</span>
             <button class="btn btn-secondary" onclick="window.app.setBonusBid(1)">+</button>
+          </div>
+          <label class="bonus-field-label">Money at stake (max $1000)</label>
+          <div class="bid-stepper">
+            <button class="btn btn-secondary" onclick="window.app.setNameBidWager(-100)">&minus;</button>
+            <span class="bid-value">$${bonusState.bidWager}</span>
+            <button class="btn btn-secondary" onclick="window.app.setNameBidWager(100)">+</button>
           </div>`}
           <label class="bonus-field-label">Who's naming?</label>
           <div class="bonus-attempter">
@@ -2370,7 +2382,7 @@
       <div class="bonus-play">
         <div class="bonus-play-head">
           <span style="color:${att.color}; font-weight:700">${escapeHtml(att.name)}</span>
-          <span class="bonus-score">${isBid ? ('Target: <strong>' + bonusState.bid + '</strong>') : ('Every ' + bonusState.ratePer + ' = $' + bonusState.ratePay)}</span>
+          <span class="bonus-score">${isBid ? ('Target: <strong>' + bonusState.bid + '</strong> &middot; Wager: <strong>$' + bonusState.bidWager + '</strong>') : ('Every ' + bonusState.ratePer + ' = $' + bonusState.ratePay)}</span>
         </div>
         <div class="timer-bar-wrapper"><div class="timer-bar" id="bonus-timer-bar" style="width:100%"></div></div>
         <div class="timer-display" id="bonus-timer-display">${bonusState.duration}</div>
@@ -2443,9 +2455,10 @@
     let winIdx, award, title, line;
     if (bonusState.nameScoring === 'bid') {
       const reached = bonusState.count >= bonusState.bid;
-      if (reached) { winIdx = attIdx; award = bonusState.bid * 25; title = 'Bid Made!'; }
-      else { winIdx = oppIdx; award = 100; title = 'Came Up Short!'; }
-      line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> of ${bonusState.bid} &mdash; ${escapeHtml(bonusState.prompt)}.`;
+      award = bonusState.bidWager;
+      if (reached) { winIdx = attIdx; title = 'Bid Made!'; }
+      else { winIdx = oppIdx; title = 'Came Up Short!'; }
+      line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> of ${bonusState.bid} for <strong>$${bonusState.bidWager}</strong> &mdash; ${escapeHtml(bonusState.prompt)}.`;
     } else {
       winIdx = attIdx; award = nameRateEarned(); title = award > 0 ? 'Nice naming!' : "Time's up!";
       line = `${escapeHtml(att.name)} named <strong>${bonusState.count}</strong> &mdash; ${escapeHtml(bonusState.prompt)} (every ${bonusState.ratePer} = $${bonusState.ratePay}).`;
@@ -2937,6 +2950,7 @@
     setBonusDuration,
     setBonusPrompt,
     setBonusBid,
+    setNameBidWager,
     setBonusAttempter,
     setBonusUseReps,
     setBonusFeud,

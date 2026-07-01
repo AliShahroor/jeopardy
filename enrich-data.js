@@ -5559,6 +5559,33 @@ const ENRICH_ADDITIONS = {
   "Flags of the World": [
     { q: "Which country's flag has a red circle centered on a white field?", a: "Japan", points: 200, type: "text" }
   ],
+  "Arab World": [
+    { q: "What is the capital city of Qatar?", a: "Doha", points: 200, type: "text" },
+    { q: "Which sea lies east of Qatar and Saudi Arabia?", a: "The Arabian Gulf", points: 200, type: "text", accept: ["Arabian Gulf", "Persian Gulf"] },
+    { q: "What month of fasting is observed by Muslims around the world?", a: "Ramadan", points: 200, type: "text" },
+    { q: "What Arabic word is commonly used to say hello?", a: "Marhaba", points: 200, type: "text", accept: ["Salam", "As-salamu alaykum", "Assalamu alaikum"] },
+    { q: "Which city in the UAE is famous for the Burj Khalifa?", a: "Dubai", points: 200, type: "text" },
+    { q: "What is the currency of Qatar?", a: "Qatari riyal", points: 400, type: "text", accept: ["Riyal", "Qatar riyal"] },
+    { q: "Which Gulf country has Muscat as its capital?", a: "Oman", points: 400, type: "text" },
+    { q: "Which Saudi city is home to the Kaaba?", a: "Mecca", points: 400, type: "text", accept: ["Makkah"] },
+    { q: "What traditional boat is strongly associated with Gulf pearl diving and trade?", a: "Dhow", points: 400, type: "text" },
+    { q: "Which pan-Arab TV network was launched in Qatar in 1996?", a: "Al Jazeera", points: 400, type: "text" },
+    { q: "Which country hosted the 2022 FIFA World Cup?", a: "Qatar", points: 400, type: "text" },
+    { q: "What is the capital of Jordan?", a: "Amman", points: 600, type: "text" },
+    { q: "Which ancient rock-cut city in Jordan is nicknamed the Rose City?", a: "Petra", points: 600, type: "text" },
+    { q: "Which country has Beirut as its capital?", a: "Lebanon", points: 600, type: "text" },
+    { q: "Which strait connects the Gulf of Oman with the Arabian Gulf?", a: "Strait of Hormuz", points: 600, type: "text", accept: ["Hormuz"] },
+    { q: "What is the traditional Gulf cloak worn by many men over formal clothing called?", a: "Bisht", points: 600, type: "text" },
+    { q: "Which North African country is home to the ancient city of Carthage?", a: "Tunisia", points: 800, type: "text" },
+    { q: "Which mountain range stretches across Morocco, Algeria, and Tunisia?", a: "Atlas Mountains", points: 800, type: "text", accept: ["Atlas"] },
+    { q: "Which Arab scientist is often called the father of optics for his Book of Optics?", a: "Ibn al-Haytham", points: 800, type: "text", accept: ["Alhazen", "Ibn al Haytham"] },
+    { q: "Which Omani port city was historically a major center for frankincense trade?", a: "Salalah", points: 800, type: "text" },
+    { q: "Which medieval traveler from Tangier wrote about journeys across Africa, Asia, and the Middle East?", a: "Ibn Battuta", points: 1000, type: "text" },
+    { q: "Which pre-Islamic city in Yemen was capital of the Sabaean kingdom?", a: "Marib", points: 1000, type: "text", accept: ["Ma'rib"] },
+    { q: "Which Abbasid caliph is associated with Baghdad's House of Wisdom golden age?", a: "Al-Ma'mun", points: 1000, type: "text", accept: ["Al Mamun"] },
+    { q: "Which historic mosque in Damascus is one of the oldest and largest mosques in the world?", a: "Umayyad Mosque", points: 1000, type: "text", accept: ["Great Mosque of Damascus"] },
+    { q: "Which Arab League member is an island nation in the Indian Ocean off East Africa?", a: "Comoros", points: 1000, type: "text" }
+  ],
   "Logos & Brands": [
     { q: "Which sportswear brand uses a swoosh logo?", a: "Nike", points: 200, type: "text" }
   ],

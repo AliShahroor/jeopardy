@@ -276,7 +276,17 @@ const FAMILY_FEUD = [
   { prompt: "We asked 100 people: name something in a child's backpack.", answers: ["Books", "Pencils", "Lunch", "Notebook", "Snacks", "Water bottle", "Crayons"] },
   { prompt: "We asked 100 people: name a chore nobody likes to do.", answers: ["Dishes", "Laundry", "Cleaning the bathroom", "Taking out trash", "Vacuuming", "Mowing the lawn", "Ironing"] },
   { prompt: "We asked 100 people: name something you might lose around the house.", answers: ["Keys", "Phone", "Remote", "Glasses", "Socks", "Wallet", "Charger"] },
-  { prompt: "We asked 100 people: name a topping you put on ice cream.", answers: ["Sprinkles", "Chocolate syrup", "Whipped cream", "Cherry", "Nuts", "Caramel", "Hot fudge"] }
+  { prompt: "We asked 100 people: name a topping you put on ice cream.", answers: ["Sprinkles", "Chocolate syrup", "Whipped cream", "Cherry", "Nuts", "Caramel", "Hot fudge"] },
+  { prompt: "We asked 100 people: name something people drink with breakfast.", answers: ["Coffee", "Tea", "Orange juice", "Water", "Milk", "Smoothie", "Hot chocolate"] },
+  { prompt: "We asked 100 people: name something you find at a wedding.", answers: ["Bride", "Groom", "Cake", "Flowers", "Music", "Dancing", "Rings"] },
+  { prompt: "We asked 100 people: name something people do during Ramadan.", answers: ["Fast", "Pray", "Read Quran", "Break fast", "Give charity", "Visit family", "Prepare food"] },
+  { prompt: "We asked 100 people: name something served with rice.", answers: ["Chicken", "Meat", "Fish", "Curry", "Vegetables", "Yogurt", "Beans"] },
+  { prompt: "We asked 100 people: name a place people go on vacation.", answers: ["Beach", "Dubai", "Paris", "London", "Mountains", "Resort", "Theme park"] },
+  { prompt: "We asked 100 people: name something found in a mall.", answers: ["Shops", "Food court", "Cinema", "Clothes", "Perfume", "Parking", "Escalator"] },
+  { prompt: "We asked 100 people: name something people buy before Eid.", answers: ["Clothes", "Sweets", "Gifts", "Perfume", "Chocolate", "Decorations", "Shoes"] },
+  { prompt: "We asked 100 people: name a common phone app.", answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Snapchat", "Google Maps", "Email"] },
+  { prompt: "We asked 100 people: name something you see at an airport.", answers: ["Planes", "Luggage", "Passport", "Security", "Duty free", "Boarding gate", "Trolleys"] },
+  { prompt: "We asked 100 people: name a popular dessert.", answers: ["Cake", "Ice cream", "Kunafa", "Chocolate", "Baklava", "Cookies", "Cheesecake"] }
 ];
 
 // Extra topics for the 'name as many' bonus game.
@@ -287,5 +297,10 @@ const NAME_PROMPTS_EXTRA = [
   "Musical instruments", "Yellow things", "Card games", "Things you bring camping",
   "Vegetables", "Olympic sports", "Things in a classroom", "Cartoon characters",
   "Things found in space", "Fast food chains", "Things at a birthday party", "Pizza chains",
-  "James Bond actors"
+  "James Bond actors", "Arab countries", "GCC countries", "Middle Eastern capitals",
+  "Qatar landmarks", "Things in a majlis", "Ramadan foods", "Eid gifts",
+  "Arabic names", "Football World Cup winners", "Premier League clubs",
+  "Champions League winners", "Countries with Arabic as an official language",
+  "Cities in the Gulf", "Things at a wedding", "Desserts", "Phone apps",
+  "Things in an airport", "School subjects", "Board games"
 ];
