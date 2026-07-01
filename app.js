@@ -1057,7 +1057,7 @@
     const content = document.getElementById('modal-content');
 
     content.innerHTML = `
-      <div class="question-text">${escapeHtml(question.q)}</div>
+      <div class="question-text">${escapeHtml(displayQuestionText(question.q))}</div>
       <div class="timer-container">
         <div class="timer-bar-wrapper">
           <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
@@ -1115,7 +1115,7 @@
 
     content.innerHTML = `
       ${imageHtml ? `<div class="question-image-container">${imageHtml}</div>` : ''}
-      <div class="question-text">${escapeHtml(question.q)}</div>
+      <div class="question-text">${escapeHtml(displayQuestionText(question.q))}</div>
       <div class="timer-container">
         <div class="timer-bar-wrapper">
           <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
@@ -1151,7 +1151,7 @@
     const target = question.target || 30;
 
     content.innerHTML = `
-      <div class="question-text">${escapeHtml(question.q)}</div>
+      <div class="question-text">${escapeHtml(displayQuestionText(question.q))}</div>
       <div class="timer-container">
         <div class="timer-bar-wrapper">
           <div class="timer-bar" id="timer-bar" style="width: 100%"></div>
@@ -2774,6 +2774,10 @@
   }
 
   // ---- Helpers ----
+  function displayQuestionText(str) {
+    return String(str || '').replace(/^(Quick recall|Recall|Alternate clue|Category challenge|Board bonus|Deep pool clue|Fresh wording):\s*/i, '');
+  }
+
   function escapeHtml(str) {
     if (!str) return '';
     const div = document.createElement('div');

@@ -636,14 +636,14 @@ if (typeof REAL_CATEGORIES !== 'undefined') {
 // this list (older narrow placeholders) is removed from the active set.
 const ACTIVE_CATEGORIES = [
   // Curated, direct-question themes (clean, well-known, randomized)
-  'General Knowledge', 'Sports', 'History', 'Geography', 'Movies & TV', 'Music & Songs',
+  'General Knowledge', 'Arab World', 'Sports', 'History', 'Geography', 'Movies & TV', 'Music & Songs',
   'Science', 'Animals & Nature', 'Food & Drink', 'Famous People', 'Technology & Inventions',
   'Space & Astronomy', 'Art & Literature', 'Pop Culture', 'Famous Landmarks',
   // Bonus curated genres
   'Video Games', 'Anime & Manga', 'Superheroes', 'Football (Soccer)',
   'Cars & Automotive', 'Internet Culture', 'Mythology', 'World Religions', 'Flags of the World',
   // New categories
-  'Arab World', 'Logos & Brands', 'Cartoons & Animation', 'TV Shows'
+  'Logos & Brands', 'Cartoons & Animation', 'TV Shows'
 ];
 Object.keys(QUESTION_BANK).forEach(k => {
   if (ACTIVE_CATEGORIES.indexOf(k) === -1) delete QUESTION_BANK[k];
@@ -796,7 +796,7 @@ function getRandomQuestion(category, points) {
 
 // Get all available categories
 function getAvailableCategories() {
-  return Object.keys(QUESTION_BANK);
+  return ACTIVE_CATEGORIES.filter(cat => QUESTION_BANK[cat]);
 }
 
 // Build a game board from selected categories
