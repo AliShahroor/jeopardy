@@ -37,11 +37,11 @@ no cost — open `index.html` in any browser, or host it free (see `../DEPLOY.md
   - *⚡ Rapid-Fire* — take turns; **type each answer** (close spellings &
     synonyms count via fuzzy matching). Every correct one banks **+$100**; you
     keep what you earn.
-  - *📝 Name as Many* — pick a topic and play **Rate** (every *N* named banks
-    $*X*, e.g. every 10 countries = $100) or **Bid** (call a number → hit it for
-    **bid × $25**, miss → opponent gets $100). Supported topics (countries,
-    capitals, states, planets, elements, NBA teams) let you **type answers** that
-    auto-validate.
+  - *📝 Name as Many* — pick a topic, set the payout rate, then raise the target
+    back and forth. When one side stops, the high bidder has to name that many;
+    if they miss, the opponent gets the points. Supported topics (countries,
+    capitals, states, planets, elements, NBA teams, Arab/Gulf sets, football
+    winners) let you **type answers** that auto-validate.
   - *👥 Family Feud* — reveal the survey answers and tap who called each; **ranked
     scoring**, so the #1 answer is worth **$700** down to **$100** for the last.
     Typed guesses accept close spelling and natural phrasing variants such as

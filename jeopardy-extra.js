@@ -286,7 +286,17 @@ const FAMILY_FEUD = [
   { prompt: "We asked 100 people: name something people buy before Eid.", answers: ["Clothes", "Sweets", "Gifts", "Perfume", "Chocolate", "Decorations", "Shoes"] },
   { prompt: "We asked 100 people: name a common phone app.", answers: ["WhatsApp", "Instagram", "TikTok", "YouTube", "Snapchat", "Google Maps", "Email"] },
   { prompt: "We asked 100 people: name something you see at an airport.", answers: ["Planes", "Luggage", "Passport", "Security", "Duty free", "Boarding gate", "Trolleys"] },
-  { prompt: "We asked 100 people: name a popular dessert.", answers: ["Cake", "Ice cream", "Kunafa", "Chocolate", "Baklava", "Cookies", "Cheesecake"] }
+  { prompt: "We asked 100 people: name a popular dessert.", answers: ["Cake", "Ice cream", "Kunafa", "Chocolate", "Baklava", "Cookies", "Cheesecake"] },
+  { prompt: "We asked 100 people: name something you find in a majlis.", answers: ["Sofa", "Coffee", "Tea", "Dates", "Carpet", "Incense", "Tissues"] },
+  { prompt: "We asked 100 people: name something people do before guests arrive.", answers: ["Clean", "Cook", "Make coffee", "Prepare sweets", "Set the table", "Light incense", "Tidy up"] },
+  { prompt: "We asked 100 people: name a common Eid gift.", answers: ["Money", "Clothes", "Perfume", "Chocolate", "Toys", "Jewelry", "Sweets"] },
+  { prompt: "We asked 100 people: name something in a car.", answers: ["Steering wheel", "Seats", "Radio", "Air conditioning", "Seat belt", "Phone charger", "Water bottle"] },
+  { prompt: "We asked 100 people: name something people forget at home.", answers: ["Phone", "Keys", "Wallet", "Charger", "Glasses", "ID", "Lunch"] },
+  { prompt: "We asked 100 people: name a common school subject.", answers: ["Math", "Science", "English", "Arabic", "History", "Islamic studies", "Art"] },
+  { prompt: "We asked 100 people: name something you order at a cafe.", answers: ["Coffee", "Tea", "Cake", "Sandwich", "Juice", "Croissant", "Water"] },
+  { prompt: "We asked 100 people: name something people do at a football match.", answers: ["Cheer", "Chant", "Eat snacks", "Wave flags", "Take photos", "Shout", "Celebrate"] },
+  { prompt: "We asked 100 people: name something you pack for travel.", answers: ["Passport", "Clothes", "Charger", "Toothbrush", "Money", "Shoes", "Medicine"] },
+  { prompt: "We asked 100 people: name a popular social media platform.", answers: ["Instagram", "TikTok", "Snapchat", "YouTube", "X", "Facebook", "WhatsApp"] }
 ];
 
 // Extra topics for the 'name as many' bonus game.

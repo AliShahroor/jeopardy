@@ -5608,15 +5608,6 @@ Object.keys(ENRICH_ADDITIONS).forEach(cat => {
 (function expandEnrichmentPools() {
   const TARGET_PER_CATEGORY = 100;
   const SKIP = new Set(['Flags of the World']);
-  const intros = [
-    'Quick recall',
-    'Alternate clue',
-    'Category challenge',
-    'Board bonus',
-    'Deep pool clue',
-    'Fresh wording'
-  ];
-
   Object.keys(ENRICH_QUESTIONS).forEach(cat => {
     if (SKIP.has(cat)) return;
     const pool = ENRICH_QUESTIONS[cat];
@@ -5628,11 +5619,11 @@ Object.keys(ENRICH_ADDITIONS).forEach(cat => {
     let i = 0;
     while (pool.length < TARGET_PER_CATEGORY) {
       const seed = seeds[i % seeds.length];
-      const intro = intros[Math.floor(i / seeds.length) % intros.length];
       pool.push({
         ...seed,
-        q: `${intro}: ${seed.q}`,
-        source: 'supplemental-variant'
+        q: seed.q,
+        source: 'supplemental-variant',
+        variantId: `${cat}-${i}`
       });
       i++;
     }

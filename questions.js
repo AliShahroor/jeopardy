@@ -669,7 +669,8 @@ if (typeof ENRICH_QUESTIONS !== 'undefined') {
     if (!QUESTION_BANK[cat]) QUESTION_BANK[cat] = [];
     const seen = new Set(QUESTION_BANK[cat].map(q => (q.q || '').toLowerCase().trim()));
     ENRICH_QUESTIONS[cat].forEach(q => {
-      const key = (q.q || '').toLowerCase().trim();
+      let key = (q.q || '').toLowerCase().trim();
+      if (q.source === 'supplemental-variant' && q.variantId) key += `__${q.variantId}`;
       if (!seen.has(key)) { QUESTION_BANK[cat].push(q); seen.add(key); }
     });
   });
@@ -698,7 +699,8 @@ if (typeof ENRICH_QUESTIONS !== 'undefined') {
         if (aKey) seenImg.add(aKey);
         return true;
       }
-      const qKey = (q.q || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      let qKey = (q.q || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+      if (q.source === 'supplemental-variant' && q.variantId) qKey += `__${q.variantId}`;
       if (qKey && seenGlobalQ.has(qKey) && keepTier()) { tierCount[q.points]--; return false; }
       if (qKey) seenGlobalQ.add(qKey);
       return true;

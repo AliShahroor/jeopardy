@@ -159,7 +159,26 @@ const RAPID_FIRE = [
   {"q":"What is the largest type of shark?","a":"Whale shark","accept":["whale shark","the whale shark"]},
   {"q":"Which gas makes soda fizzy?","a":"Carbon dioxide","accept":["carbon dioxide","co2"]},
   {"q":"What is the capital of Switzerland?","a":"Bern","accept":["bern","berne"]},
-  {"q":"How many points is a free throw worth in basketball?","a":"1","accept":["one","1"]}
+  {"q":"How many points is a free throw worth in basketball?","a":"1","accept":["one","1"]},
+  {"q":"What is the capital of Qatar?","a":"Doha","accept":["doha"]},
+  {"q":"Which country hosted the 2022 FIFA World Cup?","a":"Qatar","accept":["qatar"]},
+  {"q":"What is the currency of Qatar?","a":"Qatari riyal","accept":["qatari riyal","riyal","qatar riyal"]},
+  {"q":"Which Gulf country has Muscat as its capital?","a":"Oman","accept":["oman"]},
+  {"q":"What city is home to the Burj Khalifa?","a":"Dubai","accept":["dubai"]},
+  {"q":"Which Saudi city is home to the Kaaba?","a":"Mecca","accept":["mecca","makkah"]},
+  {"q":"What month of fasting is observed by Muslims?","a":"Ramadan","accept":["ramadan"]},
+  {"q":"What sweet fruit is commonly eaten to break fast in Ramadan?","a":"Dates","accept":["dates","date"]},
+  {"q":"Which sea is east of Qatar?","a":"Arabian Gulf","accept":["arabian gulf","persian gulf","the gulf"]},
+  {"q":"What traditional Gulf boat was used for pearl diving and trade?","a":"Dhow","accept":["dhow"]},
+  {"q":"What is the capital of Jordan?","a":"Amman","accept":["amman"]},
+  {"q":"What ancient Jordanian city is nicknamed the Rose City?","a":"Petra","accept":["petra"]},
+  {"q":"Which country has Beirut as its capital?","a":"Lebanon","accept":["lebanon"]},
+  {"q":"What is the capital of Saudi Arabia?","a":"Riyadh","accept":["riyadh"]},
+  {"q":"Which club has won the most UEFA Champions League titles?","a":"Real Madrid","accept":["real madrid"]},
+  {"q":"Which country has won the most FIFA World Cup titles?","a":"Brazil","accept":["brazil"]},
+  {"q":"How many players start for one football team on the pitch?","a":"11","accept":["11","eleven"]},
+  {"q":"What color card sends a football player off?","a":"Red card","accept":["red","red card"]},
+  {"q":"Which sport uses a racket and shuttlecock?","a":"Badminton","accept":["badminton"]}
 ];
 
 const NAME_SETS = {
